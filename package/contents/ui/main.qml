@@ -852,10 +852,19 @@ PlasmoidItem {
             Rectangle {
                 anchors.fill: parent
                 radius: root.cornerRadius
-                // Clamp alpha directly on the Rectangle so content never
-                // bleeds through, regardless of user opacity settings.
-                color: Qt.rgba(root.panelBackground.r, root.panelBackground.g,
-                    root.panelBackground.b, Math.max(root.panelBackground.a, 0.94))
+                // Compute background directly — no dependency on any
+                // readonly property binding that might not re-evaluate.
+                // Alpha is always >= 0.94 so content never bleeds through.
+                color: {
+                    const c = Qt.lighter(
+                        root.followTheme ? Kirigami.Theme.backgroundColor
+                            : Plasmoid.configuration.backgroundColor,
+                        1.0)
+                    const a = root.backgroundEnabled
+                        ? Math.max(Plasmoid.configuration.backgroundOpacity / 100, 0.94)
+                        : 1.0
+                    return Qt.rgba(c.r, c.g, c.b, a)
+                }
                 border.width: root.borderEnabled && root.backgroundEnabled ? 1 : 0
                 border.color: root.borderColor
 
