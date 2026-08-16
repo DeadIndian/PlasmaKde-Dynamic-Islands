@@ -64,12 +64,12 @@ PlasmoidItem {
     readonly property bool borderEnabled: Plasmoid.configuration.borderEnabled
     readonly property bool followTheme: Plasmoid.configuration.followSystemTheme
     readonly property color panelBackground: {
-        if (!backgroundEnabled && !panelActive) return "transparent"
+        if (!backgroundEnabled && !popupOpen) return "transparent"
         const bg = followTheme ? Kirigami.Theme.backgroundColor : Plasmoid.configuration.backgroundColor
         const raw = withAlpha(bg, backgroundEnabled ? Plasmoid.configuration.backgroundOpacity : 100)
-        // The panel must always have a solid backdrop so widgets never bleed
-        // through to the desktop or other windows behind the popup.
-        if (panelActive) {
+        // The popup must always have a solid backdrop so content never bleeds
+        // through to the desktop or other windows behind it.
+        if (popupOpen) {
             return Qt.rgba(raw.r, raw.g, raw.b, Math.max(raw.a, 0.94))
         }
         return raw
