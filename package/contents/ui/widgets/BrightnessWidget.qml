@@ -44,7 +44,7 @@ Item {
         }
 
         PlasmaComponents.Label {
-            text: widget.src ? Math.round(widget.src.brightness) + "%" : ""
+            text: widget.src ? Math.round(widget.src.brightness / Math.max(1, widget.src.brightnessMax) * 100) + "%" : ""
             color: island.textSecondary
             font.pointSize: 10
         }
