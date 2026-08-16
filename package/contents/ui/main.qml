@@ -63,8 +63,17 @@ PlasmoidItem {
     readonly property bool backgroundEnabled: Plasmoid.configuration.backgroundEnabled
     readonly property bool borderEnabled: Plasmoid.configuration.borderEnabled
     readonly property bool followTheme: Plasmoid.configuration.followSystemTheme
-    readonly property color panelBackground: !backgroundEnabled ? "transparent"
-        : withAlpha(followTheme ? Kirigami.Theme.backgroundColor : Plasmoid.configuration.backgroundColor, Plasmoid.configuration.backgroundOpacity)
+    readonly property color panelBackground: {
+        if (!backgroundEnabled && !panelActive) return "transparent"
+        const bg = followTheme ? Kirigami.Theme.backgroundColor : Plasmoid.configuration.backgroundColor
+        const raw = withAlpha(bg, backgroundEnabled ? Plasmoid.configuration.backgroundOpacity : 100)
+        // The panel must always have a solid backdrop so widgets never bleed
+        // through to the desktop or other windows behind the popup.
+        if (panelActive) {
+            return Qt.rgba(raw.r, raw.g, raw.b, Math.max(raw.a, 0.94))
+        }
+        return raw
+    }
     readonly property color borderColor: (borderEnabled && backgroundEnabled)
         ? (followTheme ? withAlpha(Kirigami.Theme.textColor, 16) : Qt.rgba(1, 1, 1, 0.16))
         : Qt.rgba(0, 0, 0, 0)
@@ -809,7 +818,12 @@ PlasmoidItem {
         }
 
         mainItem: Item {
-            width: root.panelActive ? root.panelWidth : root.expandedWidth
+            // Panel scales to content but never shrinks below panelWidth/
+            // expandedHeight; the resize grip writes those config values.
+            width: root.panelActive
+                ? Math.max(240, root.panelWidth, expandedLoader.item && expandedLoader.item.item
+                    ? expandedLoader.item.item.implicitWidth : 0)
+                : root.expandedWidth
             height: root.panelActive
                 // Floor guards the transient frame before the panel's bindings
                 // settle, which the compositor rejects as 0-height geometry.
@@ -855,6 +869,54 @@ PlasmoidItem {
                         expandedScale.target = item
                         expandedFade.restart()
                         expandedScale.restart()
+                    }
+                }
+            }
+
+            // ---- Resize grip (bottom-right) ----
+            Item {
+                id: resizeGrip
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                width: 18
+                height: 18
+                visible: root.panelActive && root.popupOpen
+
+                Canvas {
+                    anchors.fill: parent
+                    onPaint: {
+                        var ctx = getContext("2d")
+                        ctx.strokeStyle = Qt.rgba(1, 1, 1, 0.3)
+                        ctx.lineWidth = 1
+                        ctx.beginPath()
+                        ctx.moveTo(14, 4); ctx.lineTo(4, 14)
+                        ctx.moveTo(14, 8); ctx.lineTo(8, 14)
+                        ctx.moveTo(14, 12); ctx.lineTo(12, 14)
+                        ctx.stroke()
+                    }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.SizeFDiagCursor
+                    property real lastX: 0
+                    property real lastY: 0
+
+                    onPressed: (mouse) => {
+                        lastX = mouse.x
+                        lastY = mouse.y
+                    }
+                    onPositionChanged: (mouse) => {
+                        var dx = mouse.x - lastX
+                        var dy = mouse.y - lastY
+                        lastX = mouse.x
+                        lastY = mouse.y
+                        Plasmoid.configuration.panelWidth =
+                            Math.max(240, Math.min(800,
+                                Plasmoid.configuration.panelWidth + dx))
+                        Plasmoid.configuration.panelMaxHeight =
+                            Math.max(120, Math.min(900,
+                                Plasmoid.configuration.panelMaxHeight + dy))
                     }
                 }
             }
@@ -1080,8 +1142,10 @@ PlasmoidItem {
         Loader {
             id: panelHost
             anchors.fill: parent
-            property var island: root
             source: "IslandPanel.qml"
+            // Declaring a same-named property on a Loader does not reach the
+            // loaded item, so the handle is assigned once loaded.
+            onLoaded: item.island = root
         }
     }
 

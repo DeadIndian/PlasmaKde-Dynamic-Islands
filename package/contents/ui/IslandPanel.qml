@@ -15,6 +15,8 @@ Item {
 
     property var island: null
     property bool dragging: false
+    // Tracks the widest loaded widget so the panel auto-scales its width.
+    property real contentMaxWidth: 0
 
     readonly property int pad: Plasmoid.configuration.panelPadding
     readonly property int gap: Plasmoid.configuration.panelSpacing
@@ -27,10 +29,15 @@ Item {
         && (island.activeMode === 0 || island.activeMode === 2)
         && !(island.activeMode === 0 && island.panelWidgetIds.indexOf("media") !== -1)
     readonly property real headerHeight: headerShown ? headerRow.implicitHeight + 12 : 0
-    readonly property real listHeight: widgetList.count === 0 ? 64
-        : Math.min(widgetList.contentHeight + gap * Math.max(0, widgetList.count - 1),
-            maxH - pad * 2 - headerHeight)
-    implicitHeight: pad * 2 + headerHeight + listHeight
+    // Always fill the available height so the ListView and its background
+    // reach the bottom of the panel; the ListView scrolls when content
+    // overflows.
+    readonly property real listHeight: Math.max(0, maxH - pad * 2 - headerHeight)
+    // maxH doubles as the user's preferred height (written by the resize grip)
+    // and a scroll cap when content overflows.
+    implicitHeight: Math.max(maxH, pad * 2 + headerHeight + listHeight)
+    // Width adapts to the widest widget plus the grip column (16 px).
+    implicitWidth: contentMaxWidth + 16
 
     property var widgetIds: island ? island.panelVisibleWidgets : []
 
@@ -43,6 +50,7 @@ Item {
     }
 
     function rebuild(serialized) {
+        contentMaxWidth = 0
         widgetList.model.clear()
         const ids = Utils.parseWidgetList(serialized, Catalog.ids())
         for (let i = 0; i < ids.length; i++) {
@@ -72,6 +80,8 @@ Item {
 
     Column {
         anchors.fill: parent
+        anchors.topMargin: pad
+        anchors.bottomMargin: pad
 
         // ---- Header (always mode, active content) ----
         Item {
@@ -148,7 +158,7 @@ Item {
                     id: row
 
                     width: widgetList.width
-                    height: Math.max(content.implicitHeight, 1)
+                    height: Math.max(content.height, 1)
                     property int delegateIndex: index
 
                     // Grip column: the only drag handle, so slider drags on
@@ -206,12 +216,25 @@ Item {
 
                         anchors.left: grip.right
                         anchors.right: parent.right
-                        height: row.height
+                        // A plain Item's implicit height stays 0 regardless of
+                        // its children, so the row sizes off the loaded
+                        // widget's own implicitHeight instead.
+                        height: widgetLoader.item ? widgetLoader.item.implicitHeight : 0
 
                         Loader {
+                            id: widgetLoader
+
                             anchors.fill: parent
-                            property var island: panel.island
                             source: Catalog.fileFor(model.widgetId)
+                            // Same-named Loader properties never reach the
+                            // loaded item; assign the handle explicitly.
+                            onLoaded: {
+                                item.island = panel.island
+                                // Grow the panel to fit the widest widget.
+                                if (item.implicitWidth > panel.contentMaxWidth) {
+                                    panel.contentMaxWidth = item.implicitWidth
+                                }
+                            }
                         }
                     }
                 }

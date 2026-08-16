@@ -12,6 +12,7 @@ Item {
 
     readonly property var style: island.mediaStyleExpanded
     implicitHeight: Math.max(96, style.artSize + 34)
+    implicitWidth: 400
 
     Item {
         id: artSlot

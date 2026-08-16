@@ -7,6 +7,7 @@ Item {
     property var island: null
 
     implicitHeight: 96
+    implicitWidth: 360
 
     Column {
         anchors.left: parent.left

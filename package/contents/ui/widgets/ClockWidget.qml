@@ -6,8 +6,10 @@ Item {
     property var island: null
 
     implicitHeight: 56
+    implicitWidth: Math.max(180, clockLabel.implicitWidth + 40)
 
     PlasmaComponents.Label {
+        id: clockLabel
         anchors.centerIn: parent
         text: island.timeText
         color: island.textPrimary

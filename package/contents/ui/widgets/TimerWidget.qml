@@ -10,6 +10,7 @@ Item {
     property var island: null
 
     implicitHeight: 64
+    implicitWidth: 340
 
     RowLayout {
         anchors.left: parent.left

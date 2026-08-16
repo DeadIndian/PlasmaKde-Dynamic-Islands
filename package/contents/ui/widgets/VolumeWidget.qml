@@ -11,6 +11,7 @@ Item {
 
     readonly property var src: volumeLoader.item
     implicitHeight: src && src.available ? 56 : 0
+    implicitWidth: 320
     visible: src && src.available
 
     Loader {
