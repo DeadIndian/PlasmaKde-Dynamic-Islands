@@ -83,6 +83,106 @@
             <max>4</max>
         </entry>
 
+        <!-- Media appearance -->
+        <entry name="mediaTitleVisible" type="Bool">
+            <default>true</default>
+        </entry>
+        <entry name="mediaTitleFont" type="String">
+            <default></default>
+        </entry>
+        <entry name="mediaTitleSize" type="Int">
+            <default>14</default>
+            <min>6</min>
+            <max>40</max>
+        </entry>
+        <entry name="mediaTitleWeight" type="Int">
+            <default>500</default>
+            <min>100</min>
+            <max>900</max>
+        </entry>
+        <entry name="mediaTitleColor" type="String">
+            <default></default>
+        </entry>
+        <entry name="mediaTitleScroll" type="Bool">
+            <default>false</default>
+        </entry>
+        <entry name="mediaArtistVisible" type="Bool">
+            <default>true</default>
+        </entry>
+        <entry name="mediaArtistFont" type="String">
+            <default></default>
+        </entry>
+        <entry name="mediaArtistSize" type="Int">
+            <default>10</default>
+            <min>6</min>
+            <max>40</max>
+        </entry>
+        <entry name="mediaArtistWeight" type="Int">
+            <default>400</default>
+            <min>100</min>
+            <max>900</max>
+        </entry>
+        <entry name="mediaArtistColor" type="String">
+            <default></default>
+        </entry>
+        <entry name="mediaArtistScroll" type="Bool">
+            <default>false</default>
+        </entry>
+        <entry name="mediaArtistHideIfSame" type="Bool">
+            <default>true</default>
+        </entry>
+        <entry name="mediaShowArt" type="Bool">
+            <default>true</default>
+        </entry>
+        <entry name="mediaArtSize" type="Int">
+            <default>52</default>
+            <min>24</min>
+            <max>96</max>
+        </entry>
+        <entry name="mediaArtRadius" type="Int">
+            <default>8</default>
+            <min>0</min>
+            <max>48</max>
+        </entry>
+        <entry name="mediaCapsuleArtSize" type="Int">
+            <default>22</default>
+            <min>0</min>
+            <max>28</max>
+        </entry>
+        <entry name="mediaShowSeekBar" type="Bool">
+            <default>true</default>
+        </entry>
+        <entry name="mediaSeekBarHeight" type="Int">
+            <default>5</default>
+            <min>1</min>
+            <max>12</max>
+        </entry>
+        <entry name="mediaShowTimes" type="Bool">
+            <default>false</default>
+        </entry>
+        <entry name="mediaShowSoundBars" type="Bool">
+            <default>true</default>
+        </entry>
+        <entry name="mediaShowControls" type="Bool">
+            <default>true</default>
+        </entry>
+        <entry name="mediaTitleFormat" type="String">
+            <default>{title}</default>
+        </entry>
+        <entry name="mediaArtistFormat" type="String">
+            <default>{artist}</default>
+        </entry>
+        <entry name="mediaCapsuleScale" type="Int">
+            <default>85</default>
+            <min>50</min>
+            <max>150</max>
+        </entry>
+        <entry name="mediaExpandedScale" type="Int">
+            <default>100</default>
+            <min>50</min>
+            <max>200</max>
+        </entry>
+
         <!-- Animation -->
         <entry name="animationsEnabled" type="Bool">
             <default>true</default>

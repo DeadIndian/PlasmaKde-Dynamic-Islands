@@ -8,6 +8,7 @@ import org.kde.plasma.plasmoid
 import org.kde.plasma.private.mpris as Mpris
 import org.kde.plasma.workspace.components as WorkspaceComponents
 import "Translator.js" as Tr
+import "IslandUtils.js" as Utils
 
 PlasmoidItem {
     id: root
@@ -17,14 +18,14 @@ PlasmoidItem {
     // Native hover tooltip showing the full text the compact capsule elides.
     toolTipMainText: {
         if (popupOpen) return ""
-        if (showMedia) return mediaTitle || Tr.t("Music")
+        if (showMedia) return mediaDisplayTitle || Tr.t("Music")
         if (activeMode === 2) return notificationTitle || Tr.t("Notification")
         if (compactTitle.length > 0) return compactTitle
         return timeText
     }
     toolTipSubText: {
         if (popupOpen) return ""
-        if (showMedia) return mediaArtist || mediaIdentity || ""
+        if (showMedia) return mediaDisplayArtist || mediaIdentity || ""
         if (activeMode === 2) return notificationBody || notificationApp || ""
         return ""
     }
@@ -34,7 +35,15 @@ PlasmoidItem {
     readonly property int compactSidePadding: 18
     readonly property int compactTextMaxWidth: 420
     readonly property int compactTextWidth: Math.min(compactTextMaxWidth, Math.ceil(compactTitleMetrics.width))
-    readonly property int compactLeadingWidth: showGreenDot ? 10 : activeMode === 0 ? (sharingScreen ? 86 : 68) : 24
+    // Width reserved left of the capsule title for the media indicators. The
+    // constants are tuned so the defaults (bars on, 22px art) come to 68 —
+    // the value this was hardcoded to before the elements became optional.
+    readonly property int mediaLeadingWidth: (mediaStyleCapsule.showSoundBars ? 36 : 0)
+        + ((mediaStyleCapsule.showArt && mediaStyleCapsule.capsuleArtSize > 0)
+            ? mediaStyleCapsule.capsuleArtSize + 10 : 0)
+    readonly property int compactLeadingWidth: showGreenDot ? 10
+        : activeMode === 0 ? (sharingScreen ? mediaLeadingWidth + 18 : mediaLeadingWidth)
+        : 24
     readonly property int compactTrailingWidth: (activeMode === 2 && unreadCount > 0 ? 22 : Math.ceil(compactTimeMetrics.width)) + (showFps ? 48 : 0)
     readonly property int compactGapWidth: showGreenDot ? 8 : activeMode === 0 ? 24 : 16
     readonly property int compactSeparatorsWidth: moduleSeparators ? Math.max(0, compactVisibleList.length - 1) * 16 : 0
@@ -182,7 +191,7 @@ PlasmoidItem {
             return ""
         }
         if (activeMode === 0) {
-            return mediaTitle || Tr.t("Music")
+            return mediaDisplayTitle || Tr.t("Music")
         }
         if (activeMode === 2) {
             return notificationTitle || Tr.t("Notification")
@@ -211,11 +220,23 @@ PlasmoidItem {
     property real mediaPosition: 0
     property real mediaLength: 0
     readonly property real mediaProgress: mediaLength > 0 ? Math.max(0, Math.min(1, mediaPosition / mediaLength)) : 0
+    readonly property var mediaTokens: ({
+        title: mediaTitle,
+        artist: mediaArtist,
+        album: mediaAlbum,
+        player: mediaIdentity
+    })
+    readonly property string mediaDisplayTitle: Utils.formatTemplate(Plasmoid.configuration.mediaTitleFormat, mediaTokens)
+    readonly property string mediaDisplayArtist: Utils.formatTemplate(Plasmoid.configuration.mediaArtistFormat, mediaTokens)
+    // MPRIS reports position and length in microseconds.
+    readonly property real mediaPositionSeconds: mediaPosition / 1000000
+    readonly property real mediaLengthSeconds: mediaLength / 1000000
     property date currentTime: new Date()
     property string mediaTitle: ""
     property string mediaArtist: ""
     property string mediaArtUrl: ""
     property string mediaIdentity: ""
+    property string mediaAlbum: ""
     property string notificationTitle: ""
     property string notificationBody: ""
     property string notificationIcon: "notifications"
@@ -241,11 +262,19 @@ PlasmoidItem {
     implicitWidth: Layout.preferredWidth
     implicitHeight: Layout.preferredHeight
 
+    // Supplies the default family when no media font is configured.
+    FontMetrics {
+        id: compactFontMetrics
+    }
+
     TextMetrics {
         id: compactTitleMetrics
         text: root.compactTitle
-        font.pointSize: 12
-        font.weight: Font.Medium
+        font.family: (root.activeMode === 0 && mediaStyleCapsule.titleFont.length > 0)
+            ? mediaStyleCapsule.titleFont
+            : compactFontMetrics.font.family
+        font.pointSize: root.activeMode === 0 ? mediaStyleCapsule.titleSize : 12
+        font.weight: root.activeMode === 0 ? mediaStyleCapsule.titleWeight : Font.Medium
     }
 
     TextMetrics {
@@ -261,6 +290,20 @@ PlasmoidItem {
         id: sysLoader
         active: root.enableSysMonitor
         source: "SystemMonitor.qml"
+    }
+
+    MediaStyle {
+        id: mediaStyleCapsule
+        scalePercent: Plasmoid.configuration.mediaCapsuleScale
+        fallbackPrimary: root.textPrimary
+        fallbackSecondary: root.textSecondary
+    }
+
+    MediaStyle {
+        id: mediaStyleExpanded
+        scalePercent: Plasmoid.configuration.mediaExpandedScale
+        fallbackPrimary: root.textPrimary
+        fallbackSecondary: root.textSecondary
     }
 
     FrameAnimation {
@@ -289,6 +332,7 @@ PlasmoidItem {
     function setMedia(roleModel) {
         mediaTitle = roleModel.track || ""
         mediaArtist = roleModel.artist || roleModel.identity || ""
+        mediaAlbum = roleModel.album || ""
         mediaArtUrl = roleModel.artUrl || ""
         mediaIdentity = roleModel.identity || ""
         mediaStatus = roleModel.playbackStatus
@@ -807,8 +851,10 @@ PlasmoidItem {
             }
 
             SoundBars {
-                visible: root.activeMode === 0
+                visible: root.activeMode === 0 && mediaStyleCapsule.showSoundBars
                 playing: root.mediaPlaying
+                barColor: root.textPrimary
+                animate: root.animationsEnabled
                 Layout.preferredWidth: 30
                 Layout.preferredHeight: 26
             }
@@ -820,10 +866,12 @@ PlasmoidItem {
             }
 
             MediaCompactIcon {
-                visible: root.activeMode === 0
+                visible: root.activeMode === 0 && mediaStyleCapsule.showArt
+                    && mediaStyleCapsule.capsuleArtSize > 0
                 artUrl: root.mediaArtUrl
-                Layout.preferredWidth: 22
-                Layout.preferredHeight: 22
+                radius: mediaStyleCapsule.artRadius
+                Layout.preferredWidth: mediaStyleCapsule.capsuleArtSize
+                Layout.preferredHeight: mediaStyleCapsule.capsuleArtSize
             }
 
             Rectangle {
@@ -859,15 +907,20 @@ PlasmoidItem {
                 Layout.preferredHeight: 24
             }
 
-            PlasmaComponents.Label {
+            ScrollingLabel {
                 text: root.compactTitle
                 visible: !root.showGreenDot && text.length > 0
-                color: root.textPrimary
-                font.pointSize: 12
-                font.weight: Font.Medium
-                elide: Text.ElideRight
+                    && (root.activeMode !== 0 || mediaStyleCapsule.titleVisible)
+                color: root.activeMode === 0 ? mediaStyleCapsule.titleColor : root.textPrimary
+                fontFamily: root.activeMode === 0 ? mediaStyleCapsule.titleFont : ""
+                fontSize: root.activeMode === 0 ? mediaStyleCapsule.titleSize : 12
+                fontWeight: root.activeMode === 0 ? mediaStyleCapsule.titleWeight : Font.Medium
+                scroll: root.activeMode === 0 && mediaStyleCapsule.titleScroll
+                animate: root.animationsEnabled
                 Layout.fillWidth: true
                 Layout.maximumWidth: root.compactTextMaxWidth
+                Layout.preferredHeight: implicitHeight
+                Layout.alignment: Qt.AlignVCenter
             }
 
             Rectangle {
@@ -938,144 +991,10 @@ PlasmoidItem {
     Component {
         id: musicExpanded
 
-        Item {
+        MediaExpanded {
             anchors.fill: parent
-
-            Image {
-                id: musicArt
-                anchors.left: parent.left
-                anchors.leftMargin: 16
-                anchors.verticalCenter: parent.verticalCenter
-                width: 52
-                height: 52
-                visible: source !== ""
-                source: root.mediaArtUrl
-                fillMode: Image.PreserveAspectCrop
-                asynchronous: true
-                layer.enabled: true
-            }
-
-            Rectangle {
-                anchors.fill: musicArt
-                visible: root.mediaArtUrl === ""
-                radius: 8
-                color: Qt.rgba(0.92, 0.94, 0.96, 0.28)
-
-                Kirigami.Icon {
-                    anchors.centerIn: parent
-                    source: "audio-x-generic"
-                    width: 30
-                    height: 30
-                }
-            }
-
-            SoundBars {
-                id: musicBars
-                anchors.right: parent.right
-                anchors.rightMargin: 16
-                anchors.top: parent.top
-                anchors.topMargin: 16
-                width: 38
-                height: 28
-                playing: root.mediaPlaying
-            }
-
-            Row {
-                id: musicControls
-                anchors.right: parent.right
-                anchors.rightMargin: 16
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 14
-                spacing: 14
-
-                Kirigami.Icon {
-                    source: "media-skip-backward"
-                    width: 24
-                    height: 24
-                    anchors.verticalCenter: parent.verticalCenter
-                    opacity: root.mediaContainer ? 1 : 0.35
-
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: if (root.mediaContainer) root.mediaContainer.Previous()
-                    }
-                }
-
-                Kirigami.Icon {
-                    source: root.mediaPlaying ? "media-playback-pause" : "media-playback-start"
-                    width: 26
-                    height: 26
-                    anchors.verticalCenter: parent.verticalCenter
-                    opacity: root.mediaContainer ? 1 : 0.35
-
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: if (root.mediaContainer) root.mediaContainer.PlayPause()
-                    }
-                }
-
-                Kirigami.Icon {
-                    source: "media-skip-forward"
-                    width: 24
-                    height: 24
-                    anchors.verticalCenter: parent.verticalCenter
-                    opacity: root.mediaContainer ? 1 : 0.35
-
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: if (root.mediaContainer) root.mediaContainer.Next()
-                    }
-                }
-            }
-
-            PlasmaComponents.Label {
-                id: musicTitle
-                anchors.left: musicArt.right
-                anchors.leftMargin: 14
-                anchors.right: musicBars.left
-                anchors.rightMargin: 14
-                anchors.top: parent.top
-                anchors.topMargin: 16
-                text: root.mediaTitle || Tr.t("No title")
-                color: root.textPrimary
-                font.pointSize: 14
-                font.weight: Font.Medium
-                elide: Text.ElideRight
-            }
-
-            PlasmaComponents.Label {
-                anchors.left: musicArt.right
-                anchors.leftMargin: 14
-                anchors.right: musicBars.left
-                anchors.rightMargin: 14
-                anchors.top: musicTitle.bottom
-                anchors.topMargin: 2
-                text: root.mediaArtist || root.mediaIdentity || Tr.t("Media player")
-                color: root.textSecondary
-                font.pointSize: 10
-                elide: Text.ElideRight
-            }
-
-            Rectangle {
-                anchors.left: musicArt.right
-                anchors.leftMargin: 14
-                anchors.right: musicControls.left
-                anchors.rightMargin: 16
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: 22
-                height: 5
-                radius: 3
-                color: Qt.rgba(1, 1, 1, 0.22)
-
-                Rectangle {
-                    width: parent.width * root.mediaProgress
-                    height: parent.height
-                    radius: parent.radius
-                    color: root.accent
-
-                    Behavior on width { NumberAnimation { duration: root.dur(220); easing.type: Easing.OutCubic } }
-                }
-            }
+            island: root
+            style: mediaStyleExpanded
         }
     }
 
@@ -1109,6 +1028,8 @@ PlasmoidItem {
                 width: 32
                 height: 24
                 playing: notificationPulse.running
+                barColor: root.textPrimary
+                animate: root.animationsEnabled
             }
 
             Column {
@@ -1312,10 +1233,11 @@ PlasmoidItem {
 
     component MediaCompactIcon: Item {
         property string artUrl: ""
+        property int radius: 6
 
         Rectangle {
             anchors.fill: parent
-            radius: 6
+            radius: parent.radius
             color: Qt.rgba(1, 1, 1, 0.12)
             visible: artUrl.length === 0
 
@@ -1327,58 +1249,12 @@ PlasmoidItem {
             }
         }
 
-        Image {
+        Kirigami.ShadowedImage {
             anchors.fill: parent
             visible: artUrl.length > 0
             source: artUrl
-            fillMode: Image.PreserveAspectCrop
-            asynchronous: true
+            radius: parent.radius
         }
     }
 
-    component SoundBars: Row {
-        property bool playing: false
-
-        spacing: 5
-        width: 44
-        height: 34
-
-        Repeater {
-            model: [18, 27, 14, 24, 20]
-
-            Rectangle {
-                id: bar
-
-                width: 4
-                height: modelData
-                y: (parent.height - height) / 2
-                radius: 2
-                color: root.textPrimary
-                opacity: playing ? 0.9 : 0.55
-                transformOrigin: Item.Center
-                transform: Scale {
-                    id: barScale
-                    origin.x: bar.width / 2
-                    origin.y: bar.height / 2
-                    xScale: 1
-                    yScale: playing ? 1 : 0.45
-
-                    SequentialAnimation on yScale {
-                        running: playing
-                        loops: Animation.Infinite
-                        NumberAnimation {
-                            to: 0.35 + ((index * 17) % 45) / 100
-                            duration: 260 + index * 45
-                            easing.type: Easing.InOutSine
-                        }
-                        NumberAnimation {
-                            to: 1
-                            duration: 260 + index * 45
-                            easing.type: Easing.InOutSine
-                        }
-                    }
-                }
-            }
-        }
-    }
 }

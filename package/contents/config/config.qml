@@ -1,5 +1,6 @@
 import QtQuick
 import org.kde.plasma.configuration
+import org.kde.plasma.plasmoid
 import "../ui/Translator.js" as Tr
 
 ConfigModel {
@@ -17,6 +18,12 @@ ConfigModel {
         name: Tr.t("Appearance")
         icon: "preferences-desktop-color"
         source: "configAppearance.qml"
+    }
+    ConfigCategory {
+        name: Tr.t("Media")
+        icon: "applications-multimedia"
+        source: "configMedia.qml"
+        visible: Plasmoid.configuration.enableMedia
     }
     ConfigCategory {
         name: Tr.t("Clock")
