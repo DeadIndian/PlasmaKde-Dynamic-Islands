@@ -800,7 +800,7 @@ PlasmoidItem {
         visualParent: root
         location: Plasmoid.location
         visible: false
-        x: Math.round((root.compactWidth - (root.panelActive ? root.panelWidth : root.expandedWidth)) / 2)
+        x: Math.round((root.compactWidth - (root.panelEnabled ? root.panelWidth : root.expandedWidth)) / 2)
         y: root.compactHeight + Plasmoid.configuration.popupGap
         hideOnWindowDeactivate: true
         backgroundHints: PlasmaCore.Dialog.NoBackground
@@ -820,11 +820,11 @@ PlasmoidItem {
         mainItem: Item {
             // Panel scales to content but never shrinks below panelWidth/
             // expandedHeight; the resize grip writes those config values.
-            width: root.panelActive
+            width: root.panelEnabled
                 ? Math.max(240, root.panelWidth, expandedLoader.item && expandedLoader.item.item
                     ? expandedLoader.item.item.implicitWidth : 0)
                 : root.expandedWidth
-            height: root.panelActive
+            height: root.panelEnabled
                 // Floor guards the transient frame before the panel's bindings
                 // settle, which the compositor rejects as 0-height geometry.
                 ? Math.max(40, expandedLoader.item && expandedLoader.item.item
@@ -892,7 +892,7 @@ PlasmoidItem {
                 anchors.bottom: parent.bottom
                 width: 18
                 height: 18
-                visible: root.panelActive && root.popupOpen
+                visible: root.panelEnabled && root.popupOpen
 
                 Canvas {
                     anchors.fill: parent
@@ -1141,7 +1141,11 @@ PlasmoidItem {
         Loader {
             id: modeLoader
             anchors.fill: parent
-            sourceComponent: root.panelActive ? panelContent
+            // When the panel is enabled, clicking always opens the widget
+            // panel — even while media is playing or notifications are
+            // active.  The expanded views are only shown when the panel is
+            // disabled entirely.
+            sourceComponent: root.panelEnabled ? panelContent
                 : root.activeMode === 0 ? musicExpanded
                 : root.activeMode === 2 ? notificationExpanded
                 : statusExpanded
