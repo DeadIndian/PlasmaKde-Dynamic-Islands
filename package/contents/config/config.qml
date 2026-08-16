@@ -26,6 +26,17 @@ ConfigModel {
         visible: Plasmoid.configuration.enableMedia
     }
     ConfigCategory {
+        name: Tr.t("Panel")
+        icon: "dashboard-show"
+        source: "configPanel.qml"
+    }
+    ConfigCategory {
+        name: Tr.t("Timer")
+        icon: "chronometer"
+        source: "configTimer.qml"
+        visible: Plasmoid.configuration.enableTimer
+    }
+    ConfigCategory {
         name: Tr.t("Clock")
         icon: "preferences-system-time"
         source: "configClock.qml"

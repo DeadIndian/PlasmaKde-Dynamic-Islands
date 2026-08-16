@@ -7,8 +7,10 @@ import org.kde.plasma.components as PlasmaComponents
 import org.kde.plasma.plasmoid
 import org.kde.plasma.private.mpris as Mpris
 import org.kde.plasma.workspace.components as WorkspaceComponents
+import org.kde.notification as Notifications
 import "Translator.js" as Tr
 import "IslandUtils.js" as Utils
+import "WidgetCatalog.js" as Catalog
 
 PlasmoidItem {
     id: root
@@ -98,6 +100,23 @@ PlasmoidItem {
     readonly property bool enableSysMonitor: Plasmoid.configuration.enableSysMonitor
     readonly property bool showFps: Plasmoid.configuration.showFps
     readonly property string fpsStyle: Plasmoid.configuration.fpsStyle
+    readonly property bool panelEnabled: Plasmoid.configuration.panelEnabled
+    readonly property string panelShowMode: Plasmoid.configuration.panelShowMode
+    readonly property bool popupCloseOnHoverExit: Plasmoid.configuration.popupCloseOnHoverExit
+    readonly property int panelWidth: Plasmoid.configuration.panelWidth
+    readonly property var panelWidgetIds: Utils.parseWidgetList(Plasmoid.configuration.panelWidgets, Catalog.ids())
+    // Module-gated ids dropped here; the ids themselves stay in panelWidgets so
+    // re-enabling a module restores the widget in place.
+    readonly property var panelVisibleWidgets: {
+        let out = []
+        for (let i = 0; i < panelWidgetIds.length; i++) {
+            if (Catalog.isAvailable(panelWidgetIds[i], Plasmoid.configuration)) {
+                out.push(panelWidgetIds[i])
+            }
+        }
+        return out
+    }
+    readonly property bool panelActive: panelEnabled && (panelShowMode === "always" || idleMode)
     readonly property var compactOrderList: {
         const valid = ["content", "time", "fps"]
         const parts = (Plasmoid.configuration.compactOrder || "").split("-")
@@ -148,8 +167,11 @@ PlasmoidItem {
     }
     readonly property bool sysReady: statsText.length > 0 && (cpuUsage > 0 || ramUsage > 0 || cpuTemp > 0)
     property bool sysPhase: false
-    readonly property bool showSysStats: enableSysMonitor && idleMode && sysPhase && sysReady
-    readonly property string clockDisplay: showSysStats ? statsText : timeText
+    readonly property bool sysMonitorRotateClock: Plasmoid.configuration.sysMonitorRotateClock
+    readonly property bool showSysStats: enableSysMonitor && sysMonitorRotateClock && idleMode && sysPhase && sysReady
+    readonly property string clockDisplay: (timerRunning && Plasmoid.configuration.timerTakeOverClock)
+        ? Utils.mmss(timerRemaining)
+        : showSysStats ? statsText : timeText
     readonly property int fps: fpsMeter.smoothFrameTime > 0 ? Math.round(1 / fpsMeter.smoothFrameTime) : 0
 
     readonly property int mediaCount: mediaRepeater.count
@@ -251,6 +273,9 @@ PlasmoidItem {
     property bool buildSuccess: true
     property string buildLabel: ""
     property string buildApp: ""
+    property int timerTotal: 0
+    property int timerRemaining: 0
+    property bool timerRunning: false
 
     Layout.minimumWidth: compactWidth
     Layout.minimumHeight: compactHeight
@@ -314,7 +339,7 @@ PlasmoidItem {
     Timer {
         id: sysRotateTimer
         interval: Math.max(3, Plasmoid.configuration.sysMonitorInterval) * 1000
-        running: root.enableSysMonitor && root.idleMode
+        running: root.enableSysMonitor && root.sysMonitorRotateClock && root.idleMode
         repeat: true
         onTriggered: root.sysPhase = !root.sysPhase
         onRunningChanged: if (!running) root.sysPhase = false
@@ -327,6 +352,47 @@ PlasmoidItem {
     function withAlpha(hex, percent) {
         const c = Qt.lighter(hex, 1.0)
         return Qt.rgba(c.r, c.g, c.b, Math.max(0, Math.min(100, percent)) / 100)
+    }
+
+    function startTimer(minutes) {
+        timerTotal = Math.max(1, Math.round(minutes || Plasmoid.configuration.timerDefaultMinutes)) * 60
+        timerRemaining = timerTotal
+        timerRunning = true
+    }
+
+    function pauseTimer() {
+        timerRunning = false
+    }
+
+    function resumeTimer() {
+        if (timerRemaining > 0) {
+            timerRunning = true
+        }
+    }
+
+    function resetTimer() {
+        timerRunning = false
+        timerTotal = 0
+        timerRemaining = 0
+    }
+
+    function tickTimer() {
+        timerRemaining -= 1
+        if (timerRemaining <= 0) {
+            timerRemaining = 0
+            timerRunning = false
+            finishTimer()
+        }
+    }
+
+    function finishTimer() {
+        modeIndex = 4
+        eventTimer.restart()
+        if (Plasmoid.configuration.timerNotifyOnFinish) {
+            timerNotifier.title = Tr.t("Timer finished")
+            timerNotifier.text = Tr.tr("%1 minutes elapsed", Math.round(timerTotal / 60))
+            timerNotifier.sendEvent()
+        }
     }
 
     function setMedia(roleModel) {
@@ -421,6 +487,20 @@ PlasmoidItem {
     Timer {
         id: buildTimer
         interval: 6000
+    }
+
+    Timer {
+        id: timerTick
+        interval: 1000
+        running: root.timerRunning
+        repeat: true
+        onTriggered: root.tickTimer()
+    }
+
+    Notifications.Notification {
+        id: timerNotifier
+        eventId: "timerFinished"
+        iconName: "chronometer"
     }
 
     function handleBuildNotification(app, summary, body) {
@@ -711,7 +791,7 @@ PlasmoidItem {
         visualParent: root
         location: Plasmoid.location
         visible: false
-        x: Math.round((root.compactWidth - root.expandedWidth) / 2)
+        x: Math.round((root.compactWidth - (root.panelActive ? root.panelWidth : root.expandedWidth)) / 2)
         y: root.compactHeight + Plasmoid.configuration.popupGap
         hideOnWindowDeactivate: true
         backgroundHints: PlasmaCore.Dialog.NoBackground
@@ -729,20 +809,30 @@ PlasmoidItem {
         }
 
         mainItem: Item {
-            width: root.expandedWidth
-            height: root.expandedHeight
+            width: root.panelActive ? root.panelWidth : root.expandedWidth
+            height: root.panelActive
+                // Floor guards the transient frame before the panel's bindings
+                // settle, which the compositor rejects as 0-height geometry.
+                ? Math.max(40, expandedLoader.item && expandedLoader.item.item
+                    ? expandedLoader.item.item.implicitHeight : root.expandedHeight)
+                : root.expandedHeight
             opacity: root.popupOpen ? 1 : 0
             scale: root.popupOpen ? 1 : 0.92
 
             Behavior on opacity { NumberAnimation { duration: root.animationsEnabled ? Math.round(130 * root.animMultiplier) : 0; easing.type: Easing.OutCubic } }
             Behavior on scale { NumberAnimation { duration: root.animationsEnabled ? Math.round(170 * root.animMultiplier) : 0; easing.type: Easing.OutBack } }
 
+            Shortcut {
+                sequences: [StandardKey.Cancel]
+                onActivated: root.closePopup()
+            }
+
             MouseArea {
                 id: popupMouseArea
 
                 anchors.fill: parent
                 hoverEnabled: true
-                onExited: root.closePopup()
+                onExited: if (root.popupCloseOnHoverExit) root.closePopup()
             }
 
             Rectangle {
@@ -974,17 +1064,24 @@ PlasmoidItem {
     Component {
         id: expandedContent
 
-        Item {
+        Loader {
+            id: modeLoader
             anchors.fill: parent
+            sourceComponent: root.panelActive ? panelContent
+                : root.activeMode === 0 ? musicExpanded
+                : root.activeMode === 2 ? notificationExpanded
+                : statusExpanded
+        }
+    }
 
-            Loader {
-                anchors.fill: parent
-                sourceComponent: {
-                    if (root.activeMode === 0) return musicExpanded
-                    if (root.activeMode === 2) return notificationExpanded
-                    return statusExpanded
-                }
-            }
+    Component {
+        id: panelContent
+
+        Loader {
+            id: panelHost
+            anchors.fill: parent
+            property var island: root
+            source: "IslandPanel.qml"
         }
     }
 

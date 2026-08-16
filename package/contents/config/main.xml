@@ -75,6 +75,11 @@
         <entry name="showDate" type="Bool">
             <default>false</default>
         </entry>
+        <entry name="widgetClockSize" type="Int">
+            <default>28</default>
+            <min>10</min>
+            <max>64</max>
+        </entry>
 
         <!-- Notifications -->
         <entry name="notificationBodyLines" type="Int">
@@ -237,6 +242,9 @@
         <entry name="fpsStyle" type="String">
             <default>accent</default>
         </entry>
+        <entry name="sysMonitorRotateClock" type="Bool">
+            <default>true</default>
+        </entry>
 
         <!-- Layout -->
         <entry name="compactOrder" type="String">
@@ -244,6 +252,59 @@
         </entry>
         <entry name="moduleSeparators" type="Bool">
             <default>false</default>
+        </entry>
+
+        <!-- Panel -->
+        <entry name="panelEnabled" type="Bool">
+            <default>true</default>
+        </entry>
+        <entry name="panelShowMode" type="String">
+            <default>idle</default>
+        </entry>
+        <entry name="panelWidgets" type="String">
+            <default>media,system</default>
+        </entry>
+        <entry name="panelWidth" type="Int">
+            <default>320</default>
+            <min>240</min>
+            <max>560</max>
+        </entry>
+        <entry name="panelMaxHeight" type="Int">
+            <default>420</default>
+            <min>120</min>
+            <max>900</max>
+        </entry>
+        <entry name="panelSpacing" type="Int">
+            <default>8</default>
+            <min>0</min>
+            <max>24</max>
+        </entry>
+        <entry name="panelPadding" type="Int">
+            <default>12</default>
+            <min>0</min>
+            <max>32</max>
+        </entry>
+        <entry name="panelShowGrips" type="Bool">
+            <default>true</default>
+        </entry>
+        <entry name="popupCloseOnHoverExit" type="Bool">
+            <default>false</default>
+        </entry>
+
+        <!-- Timer -->
+        <entry name="enableTimer" type="Bool">
+            <default>true</default>
+        </entry>
+        <entry name="timerDefaultMinutes" type="Int">
+            <default>25</default>
+            <min>1</min>
+            <max>600</max>
+        </entry>
+        <entry name="timerTakeOverClock" type="Bool">
+            <default>true</default>
+        </entry>
+        <entry name="timerNotifyOnFinish" type="Bool">
+            <default>true</default>
         </entry>
     </group>
 </kcfg>

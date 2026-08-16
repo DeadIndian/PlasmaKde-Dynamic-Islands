@@ -13,11 +13,19 @@ Kirigami.FormLayout {
     property alias cfg_showRamStat: ramStatSwitch.checked
     property alias cfg_showTempStat: tempStatSwitch.checked
     property alias cfg_showFps: fpsSwitch.checked
+    property alias cfg_sysMonitorRotateClock: rotateSwitch.checked
     property string cfg_fpsStyle: "accent"
 
     QQC2.Switch {
         id: sysMonSwitch
         Kirigami.FormData.label: Tr.t("System stats:")
+        text: Tr.t("Enable system monitoring (CPU, RAM, temperature)")
+    }
+
+    QQC2.Switch {
+        id: rotateSwitch
+        Kirigami.FormData.label: Tr.t("Rotate clock:")
+        enabled: sysMonSwitch.checked
         text: Tr.t("Alternate the idle clock with system usage")
     }
 
