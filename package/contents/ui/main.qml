@@ -852,7 +852,10 @@ PlasmoidItem {
             Rectangle {
                 anchors.fill: parent
                 radius: root.cornerRadius
-                color: root.panelBackground
+                // Clamp alpha directly on the Rectangle so content never
+                // bleeds through, regardless of user opacity settings.
+                color: Qt.rgba(root.panelBackground.r, root.panelBackground.g,
+                    root.panelBackground.b, Math.max(root.panelBackground.a, 0.94))
                 border.width: root.borderEnabled && root.backgroundEnabled ? 1 : 0
                 border.color: root.borderColor
 
