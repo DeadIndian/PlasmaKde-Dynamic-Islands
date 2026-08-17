@@ -258,10 +258,10 @@ Distributed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ## 👥 Maintainers
 
-- **ifny75** — [gollabharath2007@gmail.com](mailto:gollabharath2007@gmail.com) · [GitHub](https://github.com/DeadIndian)
+- **Dead Indian** — [gollabharath2007@gmail.com](mailto:gollabharath2007@gmail.com) · [GitHub](https://github.com/DeadIndian)
 
 ---
 
 <div align="center">
-<sub>Built with ❤️ by ifny75 &nbsp;·&nbsp; <a href="https://github.com/DeadIndian/PlasmaKde-Dynamic-Islands">GitHub</a> &nbsp;·&nbsp; <a href="https://store.kde.org">KDE Store</a></sub>
+<sub>Built with ❤️ by Dead Indian &nbsp;·&nbsp; <a href="https://github.com/DeadIndian/PlasmaKde-Dynamic-Islands">GitHub</a> &nbsp;·&nbsp; <a href="https://store.kde.org">KDE Store</a></sub>
 </div>
