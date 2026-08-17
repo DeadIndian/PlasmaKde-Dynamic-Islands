@@ -286,6 +286,67 @@ PlasmoidItem {
     property int timerRemaining: 0
     property bool timerRunning: false
 
+    // ── Quick Toggles State & Real System Actions ─────────────────
+    property bool wifiEnabled: true
+    property bool bluetoothEnabled: true
+    readonly property bool dndEnabled: notificationSettings ? notificationSettings.notificationsInhibited : false
+    property bool nightLightEnabled: false
+    property bool darkModeEnabled: true
+
+    Loader {
+        id: execLoader
+        source: "ExecSource.qml"
+    }
+
+    function execCmd(cmd) {
+        if (execLoader.item && execLoader.item.run && cmd) {
+            execLoader.item.run("sh -c " + JSON.stringify(cmd))
+        }
+    }
+
+    function toggleWifi() {
+        wifiEnabled = !wifiEnabled
+        execCmd("rfkill toggle wlan || nmcli radio wifi toggle")
+    }
+
+    function toggleBluetooth() {
+        bluetoothEnabled = !bluetoothEnabled
+        execCmd("rfkill toggle bluetooth")
+    }
+
+    function toggleDnd() {
+        if (notificationSettings) {
+            notificationSettings.notificationsInhibited = !notificationSettings.notificationsInhibited
+        }
+    }
+
+    function toggleNightLight() {
+        nightLightEnabled = !nightLightEnabled
+        execCmd("qdbus6 org.kde.KWin /org/kde/KWin/NightLight org.kde.KWin.NightLight.toggle || dbus-send --session --dest=org.kde.KWin /org/kde/KWin/NightLight org.kde.KWin.NightLight.toggle")
+    }
+
+    function toggleDarkMode() {
+        darkModeEnabled = !darkModeEnabled
+        execCmd("gsettings set org.gnome.desktop.interface color-scheme " + (darkModeEnabled ? "'prefer-dark'" : "'prefer-light'"))
+    }
+
+    function triggerPowerAction(action) {
+        if (action === "lock") {
+            execCmd("loginctl lock-session || qdbus6 org.freedesktop.ScreenSaver /ScreenSaver Lock")
+        } else if (action === "suspend") {
+            execCmd("systemctl suspend")
+        } else if (action === "hibernate") {
+            execCmd("systemctl hibernate")
+        } else if (action === "reboot") {
+            execCmd("systemctl reboot")
+        } else if (action === "shutdown") {
+            execCmd("systemctl poweroff")
+        } else if (action === "logout") {
+            execCmd("qdbus6 org.kde.LogoutPrompt /LogoutPrompt promptLogout || loginctl terminate-user $USER")
+        }
+        closePopup()
+    }
+
     Layout.minimumWidth: compactWidth
     Layout.minimumHeight: compactHeight
     Layout.preferredWidth: compactWidth
@@ -363,8 +424,14 @@ PlasmoidItem {
         return Qt.rgba(c.r, c.g, c.b, Math.max(0, Math.min(100, percent)) / 100)
     }
 
-    function startTimer(minutes) {
-        timerTotal = Math.max(1, Math.round(minutes || Plasmoid.configuration.timerDefaultMinutes)) * 60
+    function startTimer(minutes, seconds) {
+        const secs = Math.max(0, Math.round(seconds || 0))
+        let mins = Math.max(0, Math.round(minutes || 0))
+        if (mins === 0 && secs === 0) {
+            mins = Plasmoid.configuration.timerDefaultMinutes || 5
+            mins = Math.max(0, mins)
+        }
+        timerTotal = Math.max(1, mins * 60 + secs)
         timerRemaining = timerTotal
         timerRunning = true
     }
@@ -399,7 +466,11 @@ PlasmoidItem {
         eventTimer.restart()
         if (Plasmoid.configuration.timerNotifyOnFinish) {
             timerNotifier.title = Tr.t("Timer finished")
-            timerNotifier.text = Tr.tr("%1 minutes elapsed", Math.round(timerTotal / 60))
+            if (timerTotal >= 60) {
+                timerNotifier.text = Tr.tr("%1 minutes elapsed", Math.round(timerTotal / 60))
+            } else {
+                timerNotifier.text = Tr.tr("%1 seconds elapsed", timerTotal)
+            }
             timerNotifier.sendEvent()
         }
     }
@@ -794,14 +865,28 @@ PlasmoidItem {
         }
     }
 
+    function setVolume(pct) {
+        const val = Math.max(0, Math.min(100, Math.round(pct)))
+        execCmd("pactl set-sink-volume @DEFAULT_SINK@ " + val + "% || amixer set Master " + val + "% || wpctl set-volume @DEFAULT_AUDIO_SINK@ " + (val / 100))
+    }
+
+    function toggleMute() {
+        execCmd("pactl set-sink-mute @DEFAULT_SINK@ toggle || amixer set Master toggle || wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle")
+    }
+
+    function openKcm(kcm) {
+        if (kcm && kcm.length > 0) {
+            execCmd("kcmshell6 " + kcm + " || systemsettings " + kcm)
+        }
+        closePopup()
+    }
+
     PlasmaCore.Dialog {
         id: popup
 
         visualParent: root
         location: Plasmoid.location
         visible: false
-        x: Math.round((root.compactWidth - (root.panelEnabled ? root.panelWidth : root.expandedWidth)) / 2)
-        y: root.compactHeight + Plasmoid.configuration.popupGap
         hideOnWindowDeactivate: true
         backgroundHints: PlasmaCore.Dialog.NoBackground
 
@@ -818,23 +903,32 @@ PlasmoidItem {
         }
 
         mainItem: Item {
+            id: mainItem
+
+            readonly property Item panelContentItem: {
+                if (!expandedLoader || !expandedLoader.item) return null
+                let cur = expandedLoader.item
+                while (cur && cur.item !== undefined) {
+                    cur = cur.item
+                }
+                return cur
+            }
+
             // Panel scales to content but never shrinks below panelWidth/
             // expandedHeight; the resize grip writes those config values.
             width: root.panelEnabled
-                ? Math.max(240, root.panelWidth, expandedLoader.item && expandedLoader.item.item
-                    ? expandedLoader.item.item.implicitWidth : 0)
+                ? Math.max(320, root.panelWidth, panelContentItem ? panelContentItem.implicitWidth : 0)
                 : root.expandedWidth
             height: root.panelEnabled
-                // Floor guards the transient frame before the panel's bindings
-                // settle, which the compositor rejects as 0-height geometry.
-                ? Math.max(40, expandedLoader.item && expandedLoader.item.item
-                    ? expandedLoader.item.item.implicitHeight : root.expandedHeight)
+                ? Math.max(120, Math.min(Plasmoid.configuration.panelMaxHeight || 600, panelContentItem ? panelContentItem.implicitHeight : 240))
                 : root.expandedHeight
             opacity: root.popupOpen ? 1 : 0
-            scale: root.popupOpen ? 1 : 0.92
+            scale: root.popupOpen ? 1 : 0.96
 
-            Behavior on opacity { NumberAnimation { duration: root.animationsEnabled ? Math.round(130 * root.animMultiplier) : 0; easing.type: Easing.OutCubic } }
-            Behavior on scale { NumberAnimation { duration: root.animationsEnabled ? Math.round(170 * root.animMultiplier) : 0; easing.type: Easing.OutBack } }
+            Behavior on opacity { NumberAnimation { duration: root.animationsEnabled ? Math.round(150 * root.animMultiplier) : 0; easing.type: Easing.OutCubic } }
+            Behavior on scale { NumberAnimation { duration: root.animationsEnabled ? Math.round(180 * root.animMultiplier) : 0; easing.type: Easing.OutCubic } }
+            Behavior on height { enabled: root.animationsEnabled && root.popupOpen; NumberAnimation { duration: root.dur(200); easing.type: Easing.OutCubic } }
+            Behavior on width { enabled: root.animationsEnabled && root.popupOpen; NumberAnimation { duration: root.dur(200); easing.type: Easing.OutCubic } }
 
             Shortcut {
                 sequences: [StandardKey.Cancel]

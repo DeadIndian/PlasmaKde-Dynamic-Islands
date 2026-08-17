@@ -1,17 +1,19 @@
 .pragma library
 
-// Registry of panel widgets. `requiresModule` names a Plasmoid.configuration
-// key (e.g. "enableMedia") that must be true for the widget to appear; an
-// empty string means the widget is always available. Adding a module later
-// costs one widget file, one catalog line, one config page and one config
-// entry group.
+// Registry of panel widgets and quick toggle pills for 2D grid layout (1x1, 2x1, 2x2, 3x1, 3x2).
 var CATALOG = [
-    { id: "media", label: "Media controls", icon: "media-playback-start", file: "widgets/MediaWidget.qml", requiresModule: "enableMedia" },
-    { id: "system", label: "System resources", icon: "utilities-system-monitor", file: "widgets/SystemWidget.qml", requiresModule: "enableSysMonitor" },
-    { id: "timer", label: "Timer", icon: "chronometer", file: "widgets/TimerWidget.qml", requiresModule: "enableTimer" },
-    { id: "volume", label: "Volume", icon: "audio-volume-high", file: "widgets/VolumeWidget.qml", requiresModule: "" },
-    { id: "brightness", label: "Brightness", icon: "brightness-low", file: "widgets/BrightnessWidget.qml", requiresModule: "" },
-    { id: "clock", label: "Clock", icon: "preferences-system-time", file: "widgets/ClockWidget.qml", requiresModule: "" }
+    { id: "network", label: "Wi-Fi / Network", icon: "network-wireless", file: "widgets/QuickToggleWidget.qml", requiresModule: "", defaultSpanW: 1, defaultSpanH: 1 },
+    { id: "bluetooth", label: "Bluetooth", icon: "preferences-system-bluetooth", file: "widgets/QuickToggleWidget.qml", requiresModule: "", defaultSpanW: 1, defaultSpanH: 1 },
+    { id: "dnd", label: "Do Not Disturb", icon: "notifications-disabled", file: "widgets/QuickToggleWidget.qml", requiresModule: "", defaultSpanW: 1, defaultSpanH: 1 },
+    { id: "nightlight", label: "Night Light", icon: "kruler-west", file: "widgets/QuickToggleWidget.qml", requiresModule: "", defaultSpanW: 1, defaultSpanH: 1 },
+    { id: "darkmode", label: "Dark Theme", icon: "color-management", file: "widgets/QuickToggleWidget.qml", requiresModule: "", defaultSpanW: 1, defaultSpanH: 1 },
+    { id: "power", label: "Power & Session", icon: "system-shutdown", file: "widgets/QuickToggleWidget.qml", requiresModule: "", defaultSpanW: 1, defaultSpanH: 1 },
+    { id: "volume", label: "Volume", icon: "audio-volume-high", file: "widgets/VolumeWidget.qml", requiresModule: "", defaultSpanW: 3, defaultSpanH: 1 },
+    { id: "brightness", label: "Brightness", icon: "brightness-low", file: "widgets/BrightnessWidget.qml", requiresModule: "", defaultSpanW: 3, defaultSpanH: 1 },
+    { id: "media", label: "Media controls", icon: "media-playback-start", file: "widgets/MediaWidget.qml", requiresModule: "enableMedia", defaultSpanW: 3, defaultSpanH: 2 },
+    { id: "system", label: "System resources", icon: "utilities-system-monitor", file: "widgets/SystemWidget.qml", requiresModule: "enableSysMonitor", defaultSpanW: 3, defaultSpanH: 2 },
+    { id: "timer", label: "Timer", icon: "chronometer", file: "widgets/TimerWidget.qml", requiresModule: "enableTimer", defaultSpanW: 3, defaultSpanH: 1 },
+    { id: "clock", label: "Clock", icon: "preferences-system-time", file: "widgets/ClockWidget.qml", requiresModule: "", defaultSpanW: 3, defaultSpanH: 1 }
 ];
 
 function entryFor(id) {
@@ -35,8 +37,13 @@ function fileFor(id) { var e = entryFor(id); return e ? e.file : ""; }
 function labelFor(id) { var e = entryFor(id); return e ? e.label : ""; }
 function iconFor(id) { var e = entryFor(id); return e ? e.icon : ""; }
 function requiresModule(id) { var e = entryFor(id); return e ? e.requiresModule : ""; }
+function defaultSpanWFor(id) { var e = entryFor(id); return e ? (e.defaultSpanW || 3) : 3; }
+function defaultSpanHFor(id) { var e = entryFor(id); return e ? (e.defaultSpanH || 1) : 1; }
 
 function isAvailable(id, config) {
     var req = requiresModule(id);
-    return req === "" || config[req] === true;
+    if (req === "") return true;
+    if (!config) return true;
+    if (config[req] === undefined) return true;
+    return config[req] === true;
 }

@@ -2,16 +2,19 @@
     "KPlugin": {
         "Authors": [
             {
+                "Email": "gollabharath2007@gmail.com",
                 "Name": "ifny75"
             }
         ],
+        "BugReportUrl": "https://github.com/DeadIndian/PlasmaKde-Dynamic-Islands/issues",
         "Category": "Date and Time",
         "Description": "Dynamic-island style capsule for the Plasma panel: clock, media, notifications, keyboard layout, downloads, screen sharing, IDE builds and CPU/RAM — fully customizable.",
         "Icon": "notifications",
         "Id": "com.ifny75.dynamicisland",
         "License": "MIT",
         "Name": "Dynamic Island",
-        "Version": "1.3.0"
+        "Version": "1.3.0",
+        "Website": "https://github.com/DeadIndian/PlasmaKde-Dynamic-Islands"
     },
     "KPackageStructure": "Plasma/Applet",
     "X-Plasma-API-Minimum-Version": "6.0"

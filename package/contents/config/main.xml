@@ -262,12 +262,12 @@
             <default>idle</default>
         </entry>
         <entry name="panelWidgets" type="String">
-            <default>media,system</default>
+            <default>network:1:1,bluetooth:1:1,dnd:1:1,nightlight:1:1,darkmode:1:1,power:1:1,volume:3:1,brightness:3:1,media:3:2,system:3:2</default>
         </entry>
         <entry name="panelWidth" type="Int">
-            <default>320</default>
-            <min>240</min>
-            <max>560</max>
+            <default>420</default>
+            <min>320</min>
+            <max>720</max>
         </entry>
         <entry name="panelMaxHeight" type="Int">
             <default>420</default>
@@ -297,8 +297,13 @@
         </entry>
         <entry name="timerDefaultMinutes" type="Int">
             <default>25</default>
-            <min>1</min>
+            <min>0</min>
             <max>600</max>
+        </entry>
+        <entry name="timerDefaultSeconds" type="Int">
+            <default>0</default>
+            <min>0</min>
+            <max>59</max>
         </entry>
         <entry name="timerTakeOverClock" type="Bool">
             <default>true</default>

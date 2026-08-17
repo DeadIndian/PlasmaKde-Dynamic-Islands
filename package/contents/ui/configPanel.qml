@@ -19,25 +19,42 @@ Kirigami.FormLayout {
     property alias cfg_popupCloseOnHoverExit: hoverExitSwitch.checked
     property alias cfg_widgetClockSize: clockSizeSpin.value
     property string cfg_panelShowMode: "idle"
-    property string cfg_panelWidgets: "media,system"
+    property string cfg_panelWidgets: "network:1:1,bluetooth:1:1,dnd:1:1,nightlight:1:1,darkmode:1:1,power:1:1,volume:3:1,brightness:3:1,media:3:2,system:3:2"
 
-    function widgetIds() {
-        return Utils.parseWidgetList(cfg_panelWidgets, Catalog.ids())
+    function widgetSpecs() {
+        return Utils.parseWidgetSpecs(cfg_panelWidgets, Catalog.ids(), Catalog.defaultSpanWFor, Catalog.defaultSpanHFor)
     }
 
     function hasWidget(id) {
-        return widgetIds().indexOf(id) !== -1
+        let specs = widgetSpecs()
+        for (let i = 0; i < specs.length; i++) {
+            if (specs[i].id === id) return true
+        }
+        return false
     }
 
     function toggleWidget(id, on) {
-        let ids = widgetIds()
-        if (on && ids.indexOf(id) === -1) {
-            ids.push(id)
+        let specs = widgetSpecs()
+        if (on && !hasWidget(id)) {
+            specs.push({ id: id, spanW: Catalog.defaultSpanWFor(id), spanH: Catalog.defaultSpanHFor(id) })
         }
         if (!on) {
-            ids = ids.filter((x) => x !== id)
+            specs = specs.filter((x) => x.id !== id)
         }
-        cfg_panelWidgets = Utils.serializeWidgetList(ids)
+        cfg_panelWidgets = Utils.serializeWidgetSpecs(specs)
+    }
+
+    function moveWidget(id, delta) {
+        let specs = widgetSpecs()
+        let idx = -1
+        for (let i = 0; i < specs.length; i++) {
+            if (specs[i].id === id) { idx = i; break }
+        }
+        if (idx === -1) return
+        let target = idx + delta
+        if (target < 0 || target >= specs.length) return
+        let updated = Utils.moveItem(specs, idx, target)
+        cfg_panelWidgets = Utils.serializeWidgetSpecs(updated)
     }
 
     QQC2.Switch {
@@ -71,7 +88,7 @@ Kirigami.FormLayout {
     RowLayout {
         Kirigami.FormData.label: Tr.t("Width:")
         enabled: panelEnabledSwitch.checked
-        QQC2.SpinBox { id: widthSpin; from: 240; to: 560; stepSize: 10 }
+        QQC2.SpinBox { id: widthSpin; from: 320; to: 720; stepSize: 10 }
         QQC2.Label { text: Tr.t("px") }
     }
 
@@ -106,24 +123,57 @@ Kirigami.FormLayout {
     Item { Kirigami.FormData.isSection: true }
 
     QQC2.Label {
-        Kirigami.FormData.label: Tr.t("Widgets:")
+        Kirigami.FormData.label: Tr.t("Widgets & Pills:")
         Layout.fillWidth: true
         wrapMode: Text.WordWrap
         opacity: 0.7
         font: Kirigami.Theme.smallFont
-        text: Tr.t("Reorder by dragging in the panel. Widgets of a disabled module stay in the list but are greyed out until you enable that module.")
+        text: Tr.t("Reorder using up/down arrows or directly in Edit Mode inside the panel.")
     }
 
     Repeater {
         model: Catalog.CATALOG
 
-        delegate: QQC2.CheckBox {
+        delegate: RowLayout {
             Kirigami.FormData.label: index === 0 ? Tr.t("Show:") : ""
-            enabled: Catalog.requiresModule(modelData.id) === ""
+            spacing: 6
+            Layout.fillWidth: true
+
+            readonly property bool isModuleEnabled: Catalog.requiresModule(modelData.id) === ""
                 || Plasmoid.configuration[Catalog.requiresModule(modelData.id)]
-            text: Catalog.labelFor(modelData.id)
-            checked: page.hasWidget(modelData.id)
-            onToggled: page.toggleWidget(modelData.id, checked)
+            readonly property bool isChecked: page.hasWidget(modelData.id)
+            readonly property int activeIdx: {
+                let specs = page.widgetSpecs()
+                for (let i = 0; i < specs.length; i++) {
+                    if (specs[i].id === modelData.id) return i
+                }
+                return -1
+            }
+
+            QQC2.CheckBox {
+                enabled: isModuleEnabled
+                text: Catalog.labelFor(modelData.id)
+                checked: isChecked
+                onToggled: page.toggleWidget(modelData.id, checked)
+            }
+
+            Item { Layout.fillWidth: true }
+
+            QQC2.ToolButton {
+                icon.name: "go-up"
+                visible: isChecked && activeIdx > 0
+                onClicked: page.moveWidget(modelData.id, -1)
+                QQC2.ToolTip.visible: hovered
+                QQC2.ToolTip.text: Tr.t("Move Up")
+            }
+
+            QQC2.ToolButton {
+                icon.name: "go-down"
+                visible: isChecked && activeIdx !== -1 && activeIdx < page.widgetSpecs().length - 1
+                onClicked: page.moveWidget(modelData.id, 1)
+                QQC2.ToolTip.visible: hovered
+                QQC2.ToolTip.text: Tr.t("Move Down")
+            }
         }
     }
 
