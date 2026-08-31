@@ -64,6 +64,17 @@ assert.deepEqual(U.cycleSpan2D(2, 2), { spanW: 3, spanH: 1 });
 assert.deepEqual(U.cycleSpan2D(3, 1), { spanW: 3, spanH: 2 });
 assert.deepEqual(U.cycleSpan2D(3, 2), { spanW: 1, spanH: 1 });
 
+// cycleSpan2D with maxCols = 2 (small panel setting)
+assert.deepEqual(U.cycleSpan2D(1, 1, 2), { spanW: 2, spanH: 1 });
+assert.deepEqual(U.cycleSpan2D(2, 1, 2), { spanW: 2, spanH: 2 });
+assert.deepEqual(U.cycleSpan2D(2, 2, 2), { spanW: 1, spanH: 1 });
+
+// cycleSpan2D with maxCols = 4 (large panel setting - 4x2 and 4x3 support)
+assert.deepEqual(U.cycleSpan2D(3, 2, 4), { spanW: 4, spanH: 1 });
+assert.deepEqual(U.cycleSpan2D(4, 1, 4), { spanW: 4, spanH: 2 });
+assert.deepEqual(U.cycleSpan2D(4, 2, 4), { spanW: 4, spanH: 3 });
+assert.deepEqual(U.cycleSpan2D(4, 3, 4), { spanW: 1, spanH: 1 });
+
 // mmss
 assert.equal(U.mmss(0), "00:00");
 assert.equal(U.mmss(9), "00:09");

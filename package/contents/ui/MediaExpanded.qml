@@ -29,6 +29,18 @@ Item {
         height: width
         visible: view.style.showArt
 
+        // Album art ambient glow
+        Rectangle {
+            anchors.centerIn: parent
+            width: parent.width + 20
+            height: parent.height + 20
+            radius: width / 2
+            color: view.island && view.island.accent ? view.island.accent : "#8d5cff"
+            opacity: 0.25
+            visible: view.hasArt
+            z: -1
+        }
+
         // ShadowedImage is Kirigami's rounded-image primitive. A plain Image
         // inside a clipped Rectangle would not round, because Qt Quick's clip
         // is rectangular.
@@ -84,10 +96,16 @@ Item {
             width: 24
             height: 24
             anchors.verticalCenter: parent.verticalCenter
-            opacity: view.island.mediaContainer ? 1 : 0.35
+            opacity: view.island.mediaContainer ? (prevMouse.containsMouse ? 1.0 : 0.8) : 0.35
+            scale: prevMouse.pressed ? 0.85 : 1.0
+
+            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+            Behavior on opacity { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
             MouseArea {
+                id: prevMouse
                 anchors.fill: parent
+                hoverEnabled: true
                 onClicked: if (view.island.mediaContainer) view.island.mediaContainer.Previous()
             }
         }
@@ -97,10 +115,16 @@ Item {
             width: 26
             height: 26
             anchors.verticalCenter: parent.verticalCenter
-            opacity: view.island.mediaContainer ? 1 : 0.35
+            opacity: view.island.mediaContainer ? (playMouse.containsMouse ? 1.0 : 0.8) : 0.35
+            scale: playMouse.pressed ? 0.85 : 1.0
+
+            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+            Behavior on opacity { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
             MouseArea {
+                id: playMouse
                 anchors.fill: parent
+                hoverEnabled: true
                 onClicked: if (view.island.mediaContainer) view.island.mediaContainer.PlayPause()
             }
         }
@@ -110,10 +134,16 @@ Item {
             width: 24
             height: 24
             anchors.verticalCenter: parent.verticalCenter
-            opacity: view.island.mediaContainer ? 1 : 0.35
+            opacity: view.island.mediaContainer ? (nextMouse.containsMouse ? 1.0 : 0.8) : 0.35
+            scale: nextMouse.pressed ? 0.85 : 1.0
+
+            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+            Behavior on opacity { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
             MouseArea {
+                id: nextMouse
                 anchors.fill: parent
+                hoverEnabled: true
                 onClicked: if (view.island.mediaContainer) view.island.mediaContainer.Next()
             }
         }
@@ -198,27 +228,50 @@ Item {
             anchors.right: totalLabel.visible ? totalLabel.left : parent.right
             anchors.rightMargin: totalLabel.visible ? 8 : 0
             anchors.verticalCenter: parent.verticalCenter
-            height: view.style.seekBarHeight
+            height: seekHover.containsMouse ? view.style.seekBarHeight + 2 : view.style.seekBarHeight
             radius: Math.max(1, height / 2)
             color: Qt.rgba(1, 1, 1, 0.22)
 
+            Behavior on height {
+                NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
+            }
+
             Rectangle {
+                id: progressFill
                 width: parent.width * view.island.mediaProgress
                 height: parent.height
                 radius: parent.radius
                 color: view.island.accent
 
                 Behavior on width {
-                    NumberAnimation { duration: view.island.dur(220); easing.type: Easing.OutCubic }
+                    NumberAnimation { duration: 250; easing.type: Easing.OutCubic }
+                }
+
+                // Glowing scrubber dot
+                Rectangle {
+                    width: 10
+                    height: 10
+                    radius: 5
+                    color: "white"
+                    anchors.verticalCenter: parent.verticalCenter
+                    x: progressFill.width - 5
+                    visible: seekHover.containsMouse
+                    scale: seekHover.containsMouse ? 1.0 : 0.0
+                    
+                    Behavior on scale {
+                        NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
+                    }
                 }
             }
 
             // Click-to-seek. MPRIS positions are microseconds, and the
             // container's `position` property is writable.
             MouseArea {
+                id: seekHover
                 anchors.fill: parent
                 anchors.topMargin: -6
                 anchors.bottomMargin: -6
+                hoverEnabled: true
                 enabled: view.seekable
                 cursorShape: view.seekable ? Qt.PointingHandCursor : Qt.ArrowCursor
                 onClicked: (mouse) => {

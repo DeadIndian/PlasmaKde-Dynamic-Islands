@@ -58,7 +58,7 @@ function parseWidgetSpecs(str, validIds, defaultWFn, defaultHFn) {
 
         if (pair.length > 1) {
             var parsedW = parseInt(pair[1].trim(), 10);
-            if (parsedW >= 1 && parsedW <= 3) spanW = parsedW;
+            if (parsedW >= 1 && parsedW <= 4) spanW = parsedW;
         } else if (defaultWFn) {
             spanW = typeof defaultWFn === "function" ? defaultWFn(id) : (defaultWFn[id] || 3);
         }
@@ -90,16 +90,36 @@ function serializeWidgetSpecs(specs) {
     return parts.join(",");
 }
 
-function cycleSpan2D(w, h) {
+function cycleSpan2D(w, h, maxCols) {
     var spanW = parseInt(w, 10) || 1;
     var spanH = parseInt(h, 10) || 1;
+    var maxC = parseInt(maxCols, 10) || 3;
 
-    // Cycle sequence: 1x1 -> 2x1 -> 2x2 -> 3x1 -> 3x2 -> 1x1
-    if (spanW === 1 && spanH === 1) return { spanW: 2, spanH: 1 };
-    if (spanW === 2 && spanH === 1) return { spanW: 2, spanH: 2 };
-    if (spanW === 2 && spanH === 2) return { spanW: 3, spanH: 1 };
-    if (spanW === 3 && spanH === 1) return { spanW: 3, spanH: 2 };
-    return { spanW: 1, spanH: 1 };
+    var nextW = spanW;
+    var nextH = spanH;
+
+    if (spanW === 1 && spanH === 1) {
+        nextW = 2; nextH = 1;
+    } else if (spanW === 2 && spanH === 1) {
+        nextW = 2; nextH = 2;
+    } else if (spanW === 2 && spanH === 2) {
+        nextW = 3; nextH = 1;
+    } else if (spanW === 3 && spanH === 1) {
+        nextW = 3; nextH = 2;
+    } else if (spanW === 3 && spanH === 2 && maxC >= 4) {
+        nextW = 4; nextH = 1;
+    } else if (spanW === 4 && spanH === 1) {
+        nextW = 4; nextH = 2;
+    } else if (spanW === 4 && spanH === 2) {
+        nextW = 4; nextH = 3;
+    } else {
+        nextW = 1; nextH = 1;
+    }
+
+    if (nextW > maxC) {
+        return { spanW: 1, spanH: 1 };
+    }
+    return { spanW: nextW, spanH: nextH };
 }
 
 // Formats a duration as mm:ss, widening to h:mm:ss past an hour.

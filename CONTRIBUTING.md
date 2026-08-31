@@ -12,7 +12,7 @@ Thanks for your interest in improving Dynamic Island! 🎉
    kquitapp6 plasmashell && kstart plasmashell
    ```
    For faster iteration on a single state, use `plasmawindowed
-   com.ifny75.dynamicisland` — QML errors print to the terminal.
+   com.deadindian.dynamicisland` — QML errors print to the terminal.
 
 ## Guidelines
 

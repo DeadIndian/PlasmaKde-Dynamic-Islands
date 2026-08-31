@@ -242,8 +242,24 @@
         <entry name="fpsStyle" type="String">
             <default>accent</default>
         </entry>
+        <!-- False keeps the capsule on time + event modules only; stats stay in
+             the widget panel. Opt in to see them rotate through the clock. -->
         <entry name="sysMonitorRotateClock" type="Bool">
-            <default>true</default>
+            <default>false</default>
+        </entry>
+        <entry name="sysMonitorStyle" type="String">
+            <default>lines</default>
+        </entry>
+
+        <!-- Clock & Date -->
+        <entry name="clockDatePosition" type="String">
+            <default>below</default>
+        </entry>
+        <entry name="clockDateFormat" type="String">
+            <default>ddd_mmm_d</default>
+        </entry>
+        <entry name="clockCustomFormat" type="String">
+            <default>ddd, MMM d</default>
         </entry>
 
         <!-- Layout -->
@@ -257,6 +273,9 @@
         <!-- Panel -->
         <entry name="panelEnabled" type="Bool">
             <default>true</default>
+        </entry>
+        <entry name="panelSizePreset" type="String">
+            <default>large</default>
         </entry>
         <entry name="panelShowMode" type="String">
             <default>idle</default>

@@ -5,14 +5,15 @@ var CATALOG = [
     { id: "network", label: "Wi-Fi / Network", icon: "network-wireless", file: "widgets/QuickToggleWidget.qml", requiresModule: "", defaultSpanW: 1, defaultSpanH: 1 },
     { id: "bluetooth", label: "Bluetooth", icon: "preferences-system-bluetooth", file: "widgets/QuickToggleWidget.qml", requiresModule: "", defaultSpanW: 1, defaultSpanH: 1 },
     { id: "dnd", label: "Do Not Disturb", icon: "notifications-disabled", file: "widgets/QuickToggleWidget.qml", requiresModule: "", defaultSpanW: 1, defaultSpanH: 1 },
-    { id: "nightlight", label: "Night Light", icon: "kruler-west", file: "widgets/QuickToggleWidget.qml", requiresModule: "", defaultSpanW: 1, defaultSpanH: 1 },
+    { id: "nightlight", label: "Night Light", icon: "weather-clear-night", file: "widgets/QuickToggleWidget.qml", requiresModule: "", defaultSpanW: 1, defaultSpanH: 1 },
     { id: "darkmode", label: "Dark Theme", icon: "color-management", file: "widgets/QuickToggleWidget.qml", requiresModule: "", defaultSpanW: 1, defaultSpanH: 1 },
     { id: "power", label: "Power & Session", icon: "system-shutdown", file: "widgets/QuickToggleWidget.qml", requiresModule: "", defaultSpanW: 1, defaultSpanH: 1 },
     { id: "volume", label: "Volume", icon: "audio-volume-high", file: "widgets/VolumeWidget.qml", requiresModule: "", defaultSpanW: 3, defaultSpanH: 1 },
-    { id: "brightness", label: "Brightness", icon: "brightness-low", file: "widgets/BrightnessWidget.qml", requiresModule: "", defaultSpanW: 3, defaultSpanH: 1 },
+    { id: "brightness", label: "Brightness", icon: "display-brightness", file: "widgets/BrightnessWidget.qml", requiresModule: "", defaultSpanW: 3, defaultSpanH: 1 },
     { id: "media", label: "Media controls", icon: "media-playback-start", file: "widgets/MediaWidget.qml", requiresModule: "enableMedia", defaultSpanW: 3, defaultSpanH: 2 },
     { id: "system", label: "System resources", icon: "utilities-system-monitor", file: "widgets/SystemWidget.qml", requiresModule: "enableSysMonitor", defaultSpanW: 3, defaultSpanH: 2 },
     { id: "timer", label: "Timer", icon: "chronometer", file: "widgets/TimerWidget.qml", requiresModule: "enableTimer", defaultSpanW: 3, defaultSpanH: 1 },
+    { id: "notifications", label: "Notifications", icon: "notifications", file: "widgets/NotificationsWidget.qml", requiresModule: "enableNotifications", defaultSpanW: 3, defaultSpanH: 2 },
     { id: "clock", label: "Clock", icon: "preferences-system-time", file: "widgets/ClockWidget.qml", requiresModule: "", defaultSpanW: 3, defaultSpanH: 1 }
 ];
 

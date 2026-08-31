@@ -1,4 +1,5 @@
 import QtQuick
+import Qt5Compat.GraphicalEffects
 import org.kde.plasma.components as PlasmaComponents
 
 // Text that fits renders plainly. Text that overflows either elides (default,
@@ -24,6 +25,24 @@ Item {
     implicitWidth: label.implicitWidth
     implicitHeight: label.implicitHeight
     clip: overflowing
+
+    layer.enabled: scrolling
+    layer.effect: OpacityMask {
+        maskSource: Item {
+            width: control.width
+            height: control.height
+            Rectangle {
+                anchors.fill: parent
+                gradient: Gradient {
+                    orientation: Gradient.Horizontal
+                    GradientStop { position: 0.0; color: "transparent" }
+                    GradientStop { position: 0.06; color: "white" }
+                    GradientStop { position: 0.94; color: "white" }
+                    GradientStop { position: 1.0; color: "transparent" }
+                }
+            }
+        }
+    }
 
     // Supplies the default font family when fontFamily is left empty.
     FontMetrics {

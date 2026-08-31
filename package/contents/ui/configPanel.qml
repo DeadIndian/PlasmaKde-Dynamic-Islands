@@ -3,23 +3,32 @@ import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.plasmoid
-import "../ui/Translator.js" as Tr
-import "../ui/IslandUtils.js" as Utils
-import "../ui/WidgetCatalog.js" as Catalog
+import "Translator.js" as Tr
+import "IslandUtils.js" as Utils
+import "WidgetCatalog.js" as Catalog
+import org.kde.kcmutils as KCM
 
-Kirigami.FormLayout {
+KCM.SimpleKCM {
     id: page
 
+    // Property Aliases for Plasmoid Configuration Mapping
     property alias cfg_panelEnabled: panelEnabledSwitch.checked
-    property alias cfg_panelWidth: widthSpin.value
-    property alias cfg_panelMaxHeight: maxHeightSpin.value
-    property alias cfg_panelSpacing: spacingSpin.value
-    property alias cfg_panelPadding: paddingSpin.value
     property alias cfg_panelShowGrips: gripsSwitch.checked
     property alias cfg_popupCloseOnHoverExit: hoverExitSwitch.checked
     property alias cfg_widgetClockSize: clockSizeSpin.value
     property string cfg_panelShowMode: "idle"
-    property string cfg_panelWidgets: "network:1:1,bluetooth:1:1,dnd:1:1,nightlight:1:1,darkmode:1:1,power:1:1,volume:3:1,brightness:3:1,media:3:2,system:3:2"
+    property string cfg_panelSizePreset: "large"
+    property string cfg_panelWidgets: Plasmoid.configuration.panelWidgets || "network:1:1,bluetooth:1:1,dnd:1:1,nightlight:1:1,darkmode:1:1,power:1:1,volume:3:1,brightness:3:1,media:3:2,system:3:2"
+
+    Connections {
+        target: Plasmoid.configuration
+        ignoreUnknownSignals: true
+        function onPanelWidgetsChanged() {
+            if (Plasmoid.configuration.panelWidgets && Plasmoid.configuration.panelWidgets.length > 0) {
+                page.cfg_panelWidgets = Plasmoid.configuration.panelWidgets
+            }
+        }
+    }
 
     function widgetSpecs() {
         return Utils.parseWidgetSpecs(cfg_panelWidgets, Catalog.ids(), Catalog.defaultSpanWFor, Catalog.defaultSpanHFor)
@@ -38,7 +47,7 @@ Kirigami.FormLayout {
         if (on && !hasWidget(id)) {
             specs.push({ id: id, spanW: Catalog.defaultSpanWFor(id), spanH: Catalog.defaultSpanHFor(id) })
         }
-        if (!on) {
+        if (!on && specs.length > 1) {
             specs = specs.filter((x) => x.id !== id)
         }
         cfg_panelWidgets = Utils.serializeWidgetSpecs(specs)
@@ -57,131 +66,183 @@ Kirigami.FormLayout {
         cfg_panelWidgets = Utils.serializeWidgetSpecs(updated)
     }
 
-    QQC2.Switch {
-        id: panelEnabledSwitch
-        Kirigami.FormData.label: Tr.t("Widget panel:")
-        text: Tr.t("Open a floating widget panel from the idle capsule")
-    }
+    Kirigami.FormLayout {
+        // Section 1: Quick Control Panel Options
+        Item {
+            Kirigami.FormData.isSection: true
+            Kirigami.FormData.label: Tr.t("Quick Control Panel Options")
+        }
 
-    QQC2.ComboBox {
-        id: showModeCombo
-        Kirigami.FormData.label: Tr.t("When to open:")
-        enabled: panelEnabledSwitch.checked
-        textRole: "text"
-        valueRole: "value"
-        model: [
-            { text: Tr.t("Only when nothing else is happening"), value: "idle" },
-            { text: Tr.t("Always, with active content as a header"), value: "always" }
-        ]
-        onActivated: page.cfg_panelShowMode = currentValue
-        Component.onCompleted: currentIndex = indexOfValue(page.cfg_panelShowMode)
-    }
+        QQC2.Switch {
+            id: panelEnabledSwitch
+            Kirigami.FormData.label: Tr.t("Widget panel:")
+            text: Tr.t("Open an interactive floating control panel when clicking the idle capsule")
+        }
 
-    QQC2.Switch {
-        id: hoverExitSwitch
-        Kirigami.FormData.label: Tr.t("Close behaviour:")
-        text: Tr.t("Close when the pointer leaves the panel")
-    }
+        QQC2.ComboBox {
+            id: sizePresetCombo
+            Kirigami.FormData.label: Tr.t("Panel layout preset:")
+            enabled: panelEnabledSwitch.checked
+            textRole: "text"
+            valueRole: "value"
+            model: [
+                { text: Tr.t("Small (Compact 2x3 grid)"), value: "small" },
+                { text: Tr.t("Medium (3x3 grid)"), value: "medium" },
+                { text: Tr.t("Large (Full 4-column panel)"), value: "large" }
+            ]
+            onActivated: page.cfg_panelSizePreset = currentValue
+            Component.onCompleted: currentIndex = Math.max(0, indexOfValue(page.cfg_panelSizePreset))
+        }
 
-    Item { Kirigami.FormData.isSection: true }
+        QQC2.ComboBox {
+            id: showModeCombo
+            Kirigami.FormData.label: Tr.t("Trigger mode:")
+            enabled: panelEnabledSwitch.checked
+            textRole: "text"
+            valueRole: "value"
+            model: [
+                { text: Tr.t("Only when idle (no active media or notification)"), value: "idle" },
+                { text: Tr.t("Always, embedding active content at the top"), value: "always" }
+            ]
+            onActivated: page.cfg_panelShowMode = currentValue
+            Component.onCompleted: currentIndex = Math.max(0, indexOfValue(page.cfg_panelShowMode))
+        }
 
-    RowLayout {
-        Kirigami.FormData.label: Tr.t("Width:")
-        enabled: panelEnabledSwitch.checked
-        QQC2.SpinBox { id: widthSpin; from: 320; to: 720; stepSize: 10 }
-        QQC2.Label { text: Tr.t("px") }
-    }
+        QQC2.Switch {
+            id: hoverExitSwitch
+            Kirigami.FormData.label: Tr.t("Auto-close on hover exit:")
+            enabled: panelEnabledSwitch.checked
+            text: Tr.t("Automatically close the panel when mouse pointer leaves")
+        }
 
-    RowLayout {
-        Kirigami.FormData.label: Tr.t("Max height:")
-        enabled: panelEnabledSwitch.checked
-        QQC2.SpinBox { id: maxHeightSpin; from: 120; to: 900; stepSize: 20 }
-        QQC2.Label { text: Tr.t("px, taller panels scroll") }
-    }
+        QQC2.Switch {
+            id: gripsSwitch
+            Kirigami.FormData.label: Tr.t("Reorder handles:")
+            enabled: panelEnabledSwitch.checked
+            text: Tr.t("Always show drag handle grips on widgets (otherwise visible on hover)")
+        }
 
-    RowLayout {
-        Kirigami.FormData.label: Tr.t("Spacing:")
-        enabled: panelEnabledSwitch.checked
-        QQC2.SpinBox { id: spacingSpin; from: 0; to: 24; stepSize: 1 }
-        QQC2.Label { text: Tr.t("px between widgets") }
-    }
+        RowLayout {
+            Kirigami.FormData.label: Tr.t("Panel clock font size:")
+            enabled: panelEnabledSwitch.checked
+            spacing: 8
 
-    RowLayout {
-        Kirigami.FormData.label: Tr.t("Padding:")
-        enabled: panelEnabledSwitch.checked
-        QQC2.SpinBox { id: paddingSpin; from: 0; to: 32; stepSize: 1 }
-        QQC2.Label { text: Tr.t("px around the widgets") }
-    }
+            QQC2.SpinBox { id: clockSizeSpin; from: 10; to: 64; stepSize: 1 }
+            QQC2.Label { text: Tr.t("pt") }
+        }
 
-    QQC2.Switch {
-        id: gripsSwitch
-        Kirigami.FormData.label: Tr.t("Reorder:")
-        enabled: panelEnabledSwitch.checked
-        text: Tr.t("Always show the drag handles (otherwise they appear on hover)")
-    }
+        // Section 2: Active Control Center Widgets (Ordered List)
+        Item {
+            Kirigami.FormData.isSection: true
+            Kirigami.FormData.label: Tr.t("Active Widgets (In Panel Display Order)")
+        }
 
-    Item { Kirigami.FormData.isSection: true }
-
-    QQC2.Label {
-        Kirigami.FormData.label: Tr.t("Widgets & Pills:")
-        Layout.fillWidth: true
-        wrapMode: Text.WordWrap
-        opacity: 0.7
-        font: Kirigami.Theme.smallFont
-        text: Tr.t("Reorder using up/down arrows or directly in Edit Mode inside the panel.")
-    }
-
-    Repeater {
-        model: Catalog.CATALOG
-
-        delegate: RowLayout {
-            Kirigami.FormData.label: index === 0 ? Tr.t("Show:") : ""
-            spacing: 6
+        QQC2.Label {
             Layout.fillWidth: true
+            Layout.maximumWidth: Kirigami.Units.gridUnit * 24
+            wrapMode: Text.WordWrap
+            opacity: 0.7
+            font: Kirigami.Theme.smallFont
+            text: Tr.t("Widgets currently active on your floating panel in exact display order. Use the arrows to move items up/down.")
+        }
 
-            readonly property bool isModuleEnabled: Catalog.requiresModule(modelData.id) === ""
-                || Plasmoid.configuration[Catalog.requiresModule(modelData.id)]
-            readonly property bool isChecked: page.hasWidget(modelData.id)
-            readonly property int activeIdx: {
-                let specs = page.widgetSpecs()
-                for (let i = 0; i < specs.length; i++) {
-                    if (specs[i].id === modelData.id) return i
+        Repeater {
+            id: activeRepeater
+            model: page.widgetSpecs()
+
+            delegate: RowLayout {
+                Kirigami.FormData.label: index === 0 ? Tr.t("Active list:") : ""
+                spacing: 8
+                Layout.fillWidth: true
+
+                readonly property string widgetId: modelData.id
+                readonly property bool isModuleEnabled: Catalog.requiresModule(widgetId) === ""
+                    || Plasmoid.configuration[Catalog.requiresModule(widgetId)]
+
+                Kirigami.Icon {
+                    source: Catalog.iconFor(widgetId)
+                    width: 16; height: 16
+                    Layout.alignment: Qt.AlignVCenter
                 }
-                return -1
-            }
 
-            QQC2.CheckBox {
-                enabled: isModuleEnabled
-                text: Catalog.labelFor(modelData.id)
-                checked: isChecked
-                onToggled: page.toggleWidget(modelData.id, checked)
-            }
+                QQC2.Label {
+                    text: Catalog.labelFor(widgetId)
+                    font.weight: Font.Medium
+                    Layout.alignment: Qt.AlignVCenter
+                }
 
-            Item { Layout.fillWidth: true }
+                QQC2.Label {
+                    text: "(" + modelData.spanW + "x" + modelData.spanH + ")"
+                    font: Kirigami.Theme.smallFont
+                    opacity: 0.6
+                    Layout.alignment: Qt.AlignVCenter
+                }
 
-            QQC2.ToolButton {
-                icon.name: "go-up"
-                visible: isChecked && activeIdx > 0
-                onClicked: page.moveWidget(modelData.id, -1)
-                QQC2.ToolTip.visible: hovered
-                QQC2.ToolTip.text: Tr.t("Move Up")
-            }
+                Item { Layout.fillWidth: true }
 
-            QQC2.ToolButton {
-                icon.name: "go-down"
-                visible: isChecked && activeIdx !== -1 && activeIdx < page.widgetSpecs().length - 1
-                onClicked: page.moveWidget(modelData.id, 1)
-                QQC2.ToolTip.visible: hovered
-                QQC2.ToolTip.text: Tr.t("Move Down")
+                QQC2.ToolButton {
+                    icon.name: "go-up"
+                    enabled: index > 0
+                    onClicked: page.moveWidget(widgetId, -1)
+                    QQC2.ToolTip.visible: hovered
+                    QQC2.ToolTip.text: Tr.t("Move Up")
+                }
+
+                QQC2.ToolButton {
+                    icon.name: "go-down"
+                    enabled: index < activeRepeater.count - 1
+                    onClicked: page.moveWidget(widgetId, 1)
+                    QQC2.ToolTip.visible: hovered
+                    QQC2.ToolTip.text: Tr.t("Move Down")
+                }
+
+                QQC2.ToolButton {
+                    icon.name: "edit-delete"
+                    enabled: activeRepeater.count > 1
+                    onClicked: page.toggleWidget(widgetId, false)
+                    QQC2.ToolTip.visible: hovered
+                    QQC2.ToolTip.text: Tr.t("Remove Widget")
+                }
             }
         }
-    }
 
-    Item { Kirigami.FormData.isSection: true }
+        // Section 3: More Available Widgets to Add
+        Item {
+            Kirigami.FormData.isSection: true
+            Kirigami.FormData.label: Tr.t("Available Widgets (Click to Add)")
+        }
 
-    RowLayout {
-        Kirigami.FormData.label: Tr.t("Clock size:")
-        QQC2.SpinBox { id: clockSizeSpin; from: 10; to: 64; stepSize: 1 }
-        QQC2.Label { text: Tr.t("pt") }
+        Repeater {
+            model: Catalog.CATALOG
+
+            delegate: RowLayout {
+                readonly property bool isActive: page.hasWidget(modelData.id)
+                readonly property bool isModuleEnabled: Catalog.requiresModule(modelData.id) === ""
+                    || Plasmoid.configuration[Catalog.requiresModule(modelData.id)]
+
+                visible: !isActive && isModuleEnabled
+                spacing: 8
+                Layout.fillWidth: true
+
+                Kirigami.Icon {
+                    source: Catalog.iconFor(modelData.id)
+                    width: 16; height: 16
+                    Layout.alignment: Qt.AlignVCenter
+                }
+
+                QQC2.Label {
+                    text: Catalog.labelFor(modelData.id)
+                    Layout.alignment: Qt.AlignVCenter
+                }
+
+                Item { Layout.fillWidth: true }
+
+                QQC2.Button {
+                    text: "+ " + Tr.t("Add to Panel")
+                    icon.name: "list-add"
+                    onClicked: page.toggleWidget(modelData.id, true)
+                }
+            }
+        }
     }
 }

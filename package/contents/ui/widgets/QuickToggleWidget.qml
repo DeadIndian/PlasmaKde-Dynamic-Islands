@@ -30,7 +30,7 @@ Item {
         if (widgetId === "network") return island && island.wifiEnabled ? "network-wireless" : "network-wireless-disconnected"
         if (widgetId === "bluetooth") return island && island.bluetoothEnabled ? "preferences-system-bluetooth" : "bluetooth-disabled"
         if (widgetId === "dnd") return island && island.dndEnabled ? "notifications-disabled" : "notifications"
-        if (widgetId === "nightlight") return island && island.nightLightEnabled ? "night-light" : "kruler-west"
+        if (widgetId === "nightlight") return island && island.nightLightEnabled ? "night-light" : "weather-clear-night"
         if (widgetId === "darkmode") return island && island.darkModeEnabled ? "color-management" : "configure"
         if (widgetId === "power") return "system-shutdown"
         return "configure"
@@ -91,6 +91,7 @@ Item {
         id: pillBg
         anchors.fill: parent
         radius: 16
+        scale: pillMouse.pressed ? 0.94 : 1.0
         color: widget.isActive
             ? (island ? island.accent : "#3498db")
             : (pillMouse.pressed ? Qt.rgba(1, 1, 1, 0.22) : Qt.rgba(1, 1, 1, 0.12))
@@ -99,7 +100,8 @@ Item {
             ? Qt.lighter(island ? island.accent : "#3498db", 1.2)
             : Qt.rgba(1, 1, 1, 0.15)
 
-        Behavior on color { ColorAnimation { duration: 160 } }
+        Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+        Behavior on color { ColorAnimation { duration: 220 } }
 
         RowLayout {
             anchors.fill: parent
@@ -156,12 +158,12 @@ Item {
                 color: settingsMouse.pressed ? Qt.rgba(1, 1, 1, 0.3) : Qt.rgba(1, 1, 1, 0.12)
                 visible: widget.width > 90
 
-                PlasmaComponents.Label {
+                Kirigami.Icon {
                     anchors.centerIn: parent
-                    text: "›"
+                    source: "go-next-symbolic"
+                    width: 12
+                    height: 12
                     color: widget.isActive ? "white" : (island ? island.textPrimary : "white")
-                    font.pointSize: 11
-                    font.bold: true
                 }
 
                 MouseArea {

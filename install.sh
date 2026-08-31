@@ -2,7 +2,7 @@
 # Installs / updates the Dynamic Island plasmoid into the user's Plasma widgets.
 set -euo pipefail
 
-ID="com.ifny75.dynamicisland"
+ID="com.deadindian.dynamicisland"
 SRC="$(cd "$(dirname "$0")" && pwd)/package"
 DEST="${XDG_DATA_HOME:-$HOME/.local/share}/plasma/plasmoids/$ID"
 

@@ -90,10 +90,10 @@ Item {
                 x: volumeSlider.leftPadding
                 y: volumeSlider.topPadding + Math.round((volumeSlider.availableHeight - height) / 2)
                 implicitWidth: 200
-                implicitHeight: 6
+                implicitHeight: 8
                 width: volumeSlider.availableWidth
                 height: implicitHeight
-                radius: 3
+                radius: 4
                 color: Qt.rgba(1, 1, 1, 0.18)
 
                 Rectangle {
@@ -107,12 +107,14 @@ Item {
             handle: Rectangle {
                 x: volumeSlider.leftPadding + Math.round(volumeSlider.visualPosition * (volumeSlider.availableWidth - width))
                 y: volumeSlider.topPadding + Math.round((volumeSlider.availableHeight - height) / 2)
-                implicitWidth: 16
-                implicitHeight: 16
-                radius: 8
+                implicitWidth: 20
+                implicitHeight: 20
+                radius: 10
                 color: volumeSlider.pressed ? Qt.lighter(island ? island.accent : "#3498db", 1.2) : "white"
                 border.width: 2
                 border.color: island ? island.accent : "#3498db"
+                scale: volumeSlider.pressed ? 0.9 : (volumeSlider.hovered ? 1.1 : 1.0)
+                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
             }
         }
 
@@ -158,12 +160,15 @@ Item {
 
     // Compact pill view for spanW === 1
     Rectangle {
+        id: compactPill
         anchors.fill: parent
         visible: widget.spanW === 1
         radius: 16
         color: widget.isMuted ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.18)
         border.width: 1
         border.color: Qt.rgba(1, 1, 1, 0.15)
+        scale: pillMouse.pressed ? 0.97 : 1.0
+        Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
 
         RowLayout {
             anchors.fill: parent
@@ -192,6 +197,7 @@ Item {
         }
 
         MouseArea {
+            id: pillMouse
             anchors.fill: parent
             onClicked: {
                 if (widget.available && widget.src) {
@@ -199,6 +205,11 @@ Item {
                 } else {
                     widget.fallbackMuted = !widget.fallbackMuted
                 }
+            }
+            onWheel: (wheel) => {
+                var step = wheel.angleDelta.y > 0 ? 5 : -5
+                var nextVol = Math.max(0, Math.min(100, widget.currentPercent + step))
+                widget.updateVolume(nextVol)
             }
         }
     }

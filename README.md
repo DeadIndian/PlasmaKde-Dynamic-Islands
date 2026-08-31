@@ -65,9 +65,10 @@ No notification badge hunting. No taskbar scanning. Everything surfaces exactly 
 - Scrolling title for long track names
 
 ### 🔔 Notifications
-- App icon, title, and multi-line body preview
+- App icon, title, and multi-line body preview in the capsule
 - Animated unread indicator dot
 - Configurable body length cutoff
+- Dedicated panel widget: scrollable history, per-item dismiss, clear-all, unread count badge
 
 ### ⌨️ Keyboard Layout
 - Full layout name (not just a two-letter code)
@@ -86,30 +87,34 @@ No notification badge hunting. No taskbar scanning. Everything surfaces exactly 
 - Dedicated success ✅ and failure ❌ states in the capsule
 
 ### 📊 System Monitoring
-- CPU and RAM usage
-- Auto-rotates with the idle clock
+- CPU, RAM and temperature usage in the widget panel
+- Four display styles: progress bars, donut charts, glass value pills, mini stat cards
+- Optionally rotate the stats through the idle capsule clock
 
 ### 🎞️ FPS Counter
 - Optional real-time FPS display
 - Two styles: accent badge or plain clock font
 
 ### ⏱️ Timer & Stopwatch
-- Countdown timer with configurable presets
-- Stopwatch with lap support
+- Countdown timer with quick-preset pills and a custom minute/second picker
+- Scroll-wheel adjustment while idle, completion pulse animation
+- Compact and tall card layouts
 
 ### 🔊 Volume & Brightness
 - Live volume slider with mute toggle
 - Display brightness slider — all inside the expanded island
 
 ### 🔁 Quick Toggles
-- Configurable toggle buttons (Night Color, Do Not Disturb, Wi-Fi, etc.)
+- Configurable toggle buttons (Night Light, Do Not Disturb, Wi-Fi, Bluetooth, Dark Theme, Power)
 
 ### 🎨 Deep Customization
 - Capsule size, corner radius, color, opacity
 - Expanded panel dimensions per mode (music / notification / status)
 - Accent color, border, follow-system-theme option
 - Animation speed multiplier
-- Module order and per-feature enable/disable switches
+- Panel grid presets — Small (2 columns), Medium (3), Large (4)
+- Drag-to-reorder widgets, resizable up to `4x3` cards
+- Clock date position (below / above / beside) and custom date formats
 - Reorderable compact blocks (Content · Time · FPS) with 6 layout presets
 - Optional "/" separators between compact modules
 
@@ -155,6 +160,11 @@ cd PlasmaKde-Dynamic-Islands
 
 The script copies the package into `~/.local/share/plasma/plasmoids/` and refreshes the service cache automatically.
 
+> **Upgrading from 1.3.0 or earlier?** The plugin ID changed to `com.deadindian.dynamicisland` in 1.4.0, so Plasma sees a brand-new widget and your old settings do not carry over. Remove the old install, then re-add the widget to your panel:
+> ```bash
+> kpackagetool6 -t Plasma/Applet -r com.ifny75.dynamicisland
+> ```
+
 ---
 
 ## 💻 Usage
@@ -163,7 +173,7 @@ After installation, **right-click your panel → Add Widgets → search "Dynamic
 
 ```bash
 # Test it standalone (without restarting Plasma)
-plasmoidviewer -a com.ifny75.dynamicisland
+plasmoidviewer -a com.deadindian.dynamicisland
 
 # Reload Plasma to apply after a source update
 kquitapp6 plasmashell && kstart plasmashell
@@ -173,21 +183,15 @@ kquitapp6 plasmashell && kstart plasmashell
 
 ## ⚙️ Configuration
 
-Right-click the capsule → **Configure Dynamic Island**. Settings are organized into tabs:
+Right-click the capsule → **Configure Dynamic Island**. Settings are organized into three pages:
 
-| Tab | What you can change |
+| Page | What you can change |
 | --- | --- |
-| **Size & Shape** | Capsule dimensions, expanded panel widths per mode, corner radius, gap from panel |
-| **Layout** | Block order (Content · Time · FPS), module separators, FPS style |
-| **Appearance** | Background color & opacity, border, follow-system-theme, accent color |
-| **Clock** | Show seconds, show date, format options |
-| **Notifications** | Body length, unread indicator |
-| **Modules** | Enable/disable each feature individually |
-| **System & FPS** | CPU/RAM monitoring, FPS counter style |
-| **Animations** | Enable/disable animations, speed multiplier |
-| **Media** | Album art size, sound bar style, expanded media options |
-| **Panel** | Per-expanded-panel fine-tuning |
-| **Timer** | Timer presets and stopwatch options |
+| **Appearance & Behavior** | Capsule dimensions, expanded panel widths per mode, corner radius, gap from panel, background & border, follow-system-theme, accent color, block order (Content · Time · FPS), module separators, animation speed |
+| **Modules & Features** | Enable/disable each module, media player fonts & layout, clock/date format and position, timer defaults, system stats location & display style, FPS counter |
+| **Quick Control Panel** | Which widgets appear in the expanded panel, their order and grid spans, panel layout preset (Small / Medium / Large), trigger mode, auto-close |
+
+Plasma adds its own **About** page from the widget metadata.
 
 No file editing required — everything is in the GUI.
 
@@ -223,12 +227,12 @@ Each block can have optional "/" dividers between them.
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md) before opening a PR.
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR.
 
 1. Fork the repo
 2. Create your feature branch (`git checkout -b feature/amazing-thing`)
 3. Make your changes — no build step needed, it's pure QML
-4. Test locally with `./install.sh` then `plasmoidviewer -a com.ifny75.dynamicisland`
+4. Test locally with `./install.sh` then `plasmoidviewer -a com.deadindian.dynamicisland`
 5. Commit (`git commit -m 'feat: add amazing thing'`)
 6. Push and open a Pull Request
 
@@ -242,10 +246,13 @@ package/
     │   ├── main.xml       ← configuration schema (KConfig)
     │   └── config.qml     ← settings page registry
     └── ui/
-        ├── main.qml       ← root PlasmoidItem & all state
-        ├── IslandPanel.qml
-        ├── widgets/       ← expanded panel widgets (Volume, Timer, etc.)
-        └── config*.qml    ← one file per settings tab
+        ├── main.qml            ← root PlasmoidItem & all state
+        ├── IslandPanel.qml     ← expanded panel host
+        ├── WidgetCatalog.js    ← panel widget registry
+        ├── widgets/            ← panel widgets (Volume, Timer, Notifications, …)
+        ├── configAppearance.qml
+        ├── configModules.qml
+        └── configPanel.qml     ← the three settings pages
 ```
 
 ---
@@ -258,10 +265,10 @@ Distributed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ## 👥 Maintainers
 
-- **Dead Indian** — [gollabharath2007@gmail.com](mailto:gollabharath2007@gmail.com) · [GitHub](https://github.com/DeadIndian)
+- **DeadIndian** — [gollabharath2007@gmail.com](mailto:gollabharath2007@gmail.com) · [GitHub](https://github.com/DeadIndian)
 
 ---
 
 <div align="center">
-<sub>Built with ❤️ by Dead Indian &nbsp;·&nbsp; <a href="https://github.com/DeadIndian/PlasmaKde-Dynamic-Islands">GitHub</a> &nbsp;·&nbsp; <a href="https://store.kde.org">KDE Store</a></sub>
+<sub>Built with ❤️ by DeadIndian &nbsp;·&nbsp; <a href="https://github.com/DeadIndian/PlasmaKde-Dynamic-Islands">GitHub</a> &nbsp;·&nbsp; <a href="https://store.kde.org">KDE Store</a></sub>
 </div>

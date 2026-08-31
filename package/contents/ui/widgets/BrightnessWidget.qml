@@ -27,6 +27,25 @@ Item {
         source: "../BrightnessSource.qml"
     }
 
+    function updateBrightness(val) {
+        var target = Math.max(0, Math.min(100, Math.round(val)))
+        widget.fallbackValue = target
+        if (widget.available && widget.src) {
+            var maxVal = widget.src.brightnessMax > 0 ? widget.src.brightnessMax : 100
+            widget.src.setBrightness(Math.round((target / 100.0) * maxVal))
+        }
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.NoButton
+        onWheel: (wheel) => {
+            var step = wheel.angleDelta.y > 0 ? 5 : -5
+            var nextVal = Math.max(0, Math.min(100, Math.round(widget.pct) + step))
+            widget.updateBrightness(nextVal)
+        }
+    }
+
     // Full slider view for spanW >= 2
     RowLayout {
         anchors.left: parent.left
@@ -38,9 +57,7 @@ Item {
         visible: widget.spanW >= 2
 
         Kirigami.Icon {
-            source: widget.pct > 66 ? "brightness-high"
-                : widget.pct > 33 ? "brightness-medium"
-                : "brightness-low"
+            source: widget.pct > 50 ? "brightness-high" : "brightness-low"
             width: 20
             height: 20
             color: island ? island.textPrimary : "white"
@@ -49,22 +66,30 @@ Item {
         QQC2.Slider {
             id: brightnessSlider
             from: 0
-            to: widget.available ? Math.max(1, widget.src.brightnessMax) : 100
-            value: widget.available ? widget.src.brightness : widget.fallbackValue
+            to: 100
+            value: Math.round(widget.pct)
             Layout.fillWidth: true
-            onMoved: {
-                widget.fallbackValue = Math.round(value)
-                if (widget.available && widget.src) widget.src.setBrightness(value)
+
+            Binding on value {
+                when: !brightnessSlider.pressed
+                value: Math.round(widget.pct)
+            }
+
+            onMoved: widget.updateBrightness(value)
+            onValueChanged: {
+                if (brightnessSlider.pressed) {
+                    widget.updateBrightness(value)
+                }
             }
 
             background: Rectangle {
                 x: brightnessSlider.leftPadding
                 y: brightnessSlider.topPadding + Math.round((brightnessSlider.availableHeight - height) / 2)
                 implicitWidth: 200
-                implicitHeight: 6
+                implicitHeight: 8
                 width: brightnessSlider.availableWidth
                 height: implicitHeight
-                radius: 3
+                radius: 4
                 color: Qt.rgba(1, 1, 1, 0.18)
 
                 Rectangle {
@@ -78,12 +103,14 @@ Item {
             handle: Rectangle {
                 x: brightnessSlider.leftPadding + Math.round(brightnessSlider.visualPosition * (brightnessSlider.availableWidth - width))
                 y: brightnessSlider.topPadding + Math.round((brightnessSlider.availableHeight - height) / 2)
-                implicitWidth: 16
-                implicitHeight: 16
-                radius: 8
+                implicitWidth: 20
+                implicitHeight: 20
+                radius: 10
                 color: brightnessSlider.pressed ? Qt.lighter(island ? island.accent : "#3498db", 1.2) : "white"
                 border.width: 2
                 border.color: island ? island.accent : "#3498db"
+                scale: brightnessSlider.pressed ? 0.9 : (brightnessSlider.hovered ? 1.1 : 1.0)
+                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
             }
         }
 
@@ -98,12 +125,25 @@ Item {
 
     // Compact pill view for spanW === 1
     Rectangle {
+        id: compactPill
         anchors.fill: parent
         visible: widget.spanW === 1
         radius: 16
         color: Qt.rgba(1, 1, 1, 0.18)
         border.width: 1
         border.color: Qt.rgba(1, 1, 1, 0.15)
+        scale: pillMouse.pressed ? 0.97 : 1.0
+        Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
+
+        MouseArea {
+            id: pillMouse
+            anchors.fill: parent
+            onWheel: (wheel) => {
+                var step = wheel.angleDelta.y > 0 ? 5 : -5
+                var nextVal = Math.max(0, Math.min(100, Math.round(widget.pct) + step))
+                widget.updateBrightness(nextVal)
+            }
+        }
 
         RowLayout {
             anchors.fill: parent
@@ -112,9 +152,7 @@ Item {
             spacing: 6
 
             Kirigami.Icon {
-                source: widget.pct > 66 ? "brightness-high"
-                    : widget.pct > 33 ? "brightness-medium"
-                    : "brightness-low"
+                source: widget.pct > 50 ? "brightness-high" : "brightness-low"
                 width: 18
                 height: 18
                 color: island ? island.textPrimary : "white"

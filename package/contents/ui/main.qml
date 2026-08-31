@@ -17,6 +17,16 @@ PlasmoidItem {
 
     Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground
 
+    readonly property bool isVertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
+
+    Layout.minimumWidth: isVertical ? compactHeight : compactMinWidth
+    Layout.preferredWidth: isVertical ? (parent ? parent.width : compactHeight) : compactWidth
+    Layout.maximumWidth: isVertical ? (parent ? parent.width : compactHeight) : compactMaxWidth
+
+    Layout.minimumHeight: isVertical ? compactMinWidth : compactHeight
+    Layout.preferredHeight: isVertical ? compactWidth : compactHeight
+    Layout.maximumHeight: isVertical ? compactMaxWidth : compactHeight
+
     // Native hover tooltip showing the full text the compact capsule elides.
     toolTipMainText: {
         if (popupOpen) return ""
@@ -85,7 +95,31 @@ PlasmoidItem {
         : Qt.rgba(1, 1, 1, 0.74)
     readonly property string idleDotColor: Plasmoid.configuration.idleDotColor
     readonly property string sharingDotColor: Plasmoid.configuration.sharingDotColor
-    readonly property string timeText: {
+    function getFormattedDate(d) {
+        const preset = Plasmoid.configuration.clockDateFormat || "ddd_mmm_d"
+        const customStr = Plasmoid.configuration.clockCustomFormat || "ddd, MMM d"
+
+        if (preset === "custom" && customStr && customStr.length > 0) {
+            return Qt.formatDate(d, customStr)
+        }
+        switch (preset) {
+            case "dddd_mmm_d": return Qt.formatDate(d, "dddd, MMM d")
+            case "dddd_mmmm_d_yyyy": return Qt.formatDate(d, "dddd, MMMM d, yyyy")
+            case "ddd_d": return Qt.formatDate(d, "ddd d")
+            case "dddd": return Qt.formatDate(d, "dddd")
+            case "mmm_d": return Qt.formatDate(d, "MMM d")
+            case "iso": return Qt.formatDate(d, "yyyy-MM-dd")
+            case "numeric_eu": return Qt.formatDate(d, "dd/MM/yyyy")
+            case "numeric_us": return Qt.formatDate(d, "MM/dd/yyyy")
+            case "ddd_mmm_d":
+            default:
+                return Qt.formatDate(d, "ddd, MMM d")
+        }
+    }
+
+    readonly property string dateText: getFormattedDate(currentTime)
+
+    readonly property string timeOnlyText: {
         let fmt = Plasmoid.configuration.use24HourClock ? "HH:mm" : "h:mm"
         if (Plasmoid.configuration.showSeconds) {
             fmt += ":ss"
@@ -93,11 +127,21 @@ PlasmoidItem {
         if (!Plasmoid.configuration.use24HourClock) {
             fmt += " AP"
         }
-        let out = Qt.formatTime(currentTime, fmt)
-        if (Plasmoid.configuration.showDate) {
-            out = Qt.formatDate(currentTime, "ddd d") + "  " + out
+        return Qt.formatTime(currentTime, fmt)
+    }
+
+    readonly property string timeText: {
+        let timeStr = timeOnlyText
+        if (!Plasmoid.configuration.showDate) {
+            return timeStr
         }
-        return out
+        let pos = Plasmoid.configuration.clockDatePosition || "below"
+        if (pos === "beside_left") {
+            return dateText + "  " + timeStr
+        } else if (pos === "beside_right") {
+            return timeStr + "  " + dateText
+        }
+        return timeStr
     }
     readonly property bool eventActive: eventTimer.running || notificationPulse.running
 
@@ -293,15 +337,30 @@ PlasmoidItem {
     property bool nightLightEnabled: false
     property bool darkModeEnabled: true
 
+    property string userName: "User"
+    readonly property string sysMonitorStyle: Plasmoid.configuration.sysMonitorStyle || "lines"
+
     Loader {
         id: execLoader
         source: "ExecSource.qml"
+        onLoaded: {
+            if (item && item.query) {
+                item.query("whoami || id -un", function(un) {
+                    if (un && un.length > 0) root.userName = un
+                })
+            }
+        }
     }
 
     function execCmd(cmd) {
         if (execLoader.item && execLoader.item.run && cmd) {
             execLoader.item.run("sh -c " + JSON.stringify(cmd))
         }
+    }
+
+    function openSystemAbout() {
+        execCmd("kcmshell6 kcm_about-distro || systemsettings6 kcm_about-distro || kcmshell5 kcm_about-distro || systemsettings5 kcm_about-distro || systemsettings")
+        closePopup()
     }
 
     function toggleWifi() {
@@ -346,16 +405,6 @@ PlasmoidItem {
         }
         closePopup()
     }
-
-    Layout.minimumWidth: compactWidth
-    Layout.minimumHeight: compactHeight
-    Layout.preferredWidth: compactWidth
-    Layout.preferredHeight: compactHeight
-    Layout.maximumWidth: compactWidth
-    Layout.maximumHeight: compactHeight
-
-    implicitWidth: Layout.preferredWidth
-    implicitHeight: Layout.preferredHeight
 
     // Supplies the default family when no media font is configured.
     FontMetrics {
@@ -668,13 +717,60 @@ PlasmoidItem {
         return name || ""
     }
 
+    // The widget panel's notification list reads history, not the live popup
+    // model — a notification leaves notificationsModel the moment its timeout
+    // expires, so the list would only ever hold the one or two still on screen.
+    readonly property var notifModel: notificationHistory
+
+    function dismissNotificationAt(idx) {
+        if (idx >= 0 && idx < notificationHistory.count) {
+            notificationHistory.close(notificationHistory.index(idx, 0))
+        }
+    }
+
+    function activateNotificationAt(idx) {
+        if (idx >= 0 && idx < notificationHistory.count) {
+            notificationHistory.invokeDefaultAction(notificationHistory.index(idx, 0))
+        }
+        closePopup()
+    }
+
+    function clearAllNotifications() {
+        // Close live ones back-to-front (front-to-back would shift the rows out
+        // from under the loop), then drop what's left in history. A `while
+        // (count > 0)` loop would spin forever on a row that refuses to close.
+        for (let i = notificationHistory.count - 1; i >= 0; --i) {
+            notificationHistory.close(notificationHistory.index(i, 0))
+        }
+        notificationHistory.clear(NotificationManager.Notifications.ClearExpired)
+    }
+
     NotificationManager.Settings {
         id: notificationSettings
     }
 
     NotificationManager.Notifications {
+        id: notificationHistory
+        limit: 0
+        showExpired: true
+        showDismissed: true
+        // Without this, everything that arrived while Do Not Disturb was on is
+        // missing from the list — which is most of what DND exists to defer.
+        showAddedDuringInhibition: true
+        showNotifications: true
+        showJobs: false
+        sortMode: NotificationManager.Notifications.SortByDate
+        sortOrder: Qt.DescendingOrder
+        groupMode: NotificationManager.Notifications.GroupDisabled
+        urgencies: NotificationManager.Notifications.LowUrgency
+            | NotificationManager.Notifications.NormalUrgency
+            | NotificationManager.Notifications.CriticalUrgency
+    }
+
+    // Live popups only: drives the capsule alert, the unread badge and job progress.
+    NotificationManager.Notifications {
         id: notificationsModel
-        limit: 1
+        limit: 0
         showExpired: false
         showDismissed: false
         showNotifications: true
@@ -745,11 +841,20 @@ PlasmoidItem {
             readonly property string iconValue: model.iconName || ""
             readonly property var actionsValue: model.actionNames || []
 
+            // Row 0 is the newest (SortByDate/Descending); syncing from every row
+            // let whichever delegate happened to load last win, so the capsule
+            // could show an older notification than the one it was pulsing for.
+            function sync() {
+                if (index === 0) {
+                    root.setNotification(model)
+                }
+            }
+
             visible: false
-            Component.onCompleted: root.setNotification(model)
-            onSummaryValueChanged: root.setNotification(model)
-            onBodyValueChanged: root.setNotification(model)
-            onActionsValueChanged: root.setNotification(model)
+            Component.onCompleted: sync()
+            onSummaryValueChanged: sync()
+            onBodyValueChanged: sync()
+            onActionsValueChanged: sync()
         }
     }
 
@@ -819,17 +924,29 @@ PlasmoidItem {
         radius: height / 2
         color: "transparent"
         border.width: 0
+        rotation: root.isVertical ? 90 : 0
         transformOrigin: Item.Center
 
         Behavior on color { ColorAnimation { duration: root.animationsEnabled ? Math.round(160 * root.animMultiplier) : 0 } }
         Behavior on opacity { NumberAnimation { duration: root.animationsEnabled ? Math.round(140 * root.animMultiplier) : 0; easing.type: Easing.OutCubic } }
         Behavior on width { NumberAnimation { duration: root.animationsEnabled ? Math.round(220 * root.animMultiplier) : 0; easing.type: Easing.OutCubic } }
 
+        Rectangle {
+            height: 1
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.leftMargin: parent.radius
+            anchors.rightMargin: parent.radius
+            anchors.topMargin: 1
+            color: Qt.rgba(1, 1, 1, 0.10)
+        }
+
         SequentialAnimation {
             id: islandPop
 
-            NumberAnimation { target: island; property: "scale"; to: 1.06; duration: root.animationsEnabled ? Math.round(110 * root.animMultiplier) : 0; easing.type: Easing.OutCubic }
-            NumberAnimation { target: island; property: "scale"; to: 1.0; duration: root.animationsEnabled ? Math.round(170 * root.animMultiplier) : 0; easing.type: Easing.OutBack }
+            NumberAnimation { target: island; property: "scale"; to: 1.04; duration: root.animationsEnabled ? Math.round(110 * root.animMultiplier) : 0; easing.type: Easing.OutCubic }
+            NumberAnimation { target: island; property: "scale"; to: 1.0; duration: root.animationsEnabled ? Math.round(170 * root.animMultiplier) : 0; easing.type: Easing.OutElastic; easing.amplitude: 1.0; easing.period: 0.4 }
         }
 
         Loader {
@@ -886,9 +1003,16 @@ PlasmoidItem {
 
         visualParent: root
         location: Plasmoid.location
+        type: PlasmaCore.Dialog.OnScreenDisplay
         visible: false
         hideOnWindowDeactivate: true
         backgroundHints: PlasmaCore.Dialog.NoBackground
+        flags: Qt.Window | Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint | Qt.MSWindowsFixedSizeDialogHint
+
+        minimumWidth: mainItem ? mainItem.width : 0
+        maximumWidth: mainItem ? mainItem.width : 0
+        minimumHeight: mainItem ? mainItem.height : 0
+        maximumHeight: mainItem ? mainItem.height : 0
 
         Component.onCompleted: flags = flags | Qt.WindowStaysOnTopHint
 
@@ -917,16 +1041,16 @@ PlasmoidItem {
             // Panel scales to content but never shrinks below panelWidth/
             // expandedHeight; the resize grip writes those config values.
             width: root.panelEnabled
-                ? Math.max(320, root.panelWidth, panelContentItem ? panelContentItem.implicitWidth : 0)
+                ? (panelContentItem ? panelContentItem.implicitWidth : 320)
                 : root.expandedWidth
             height: root.panelEnabled
-                ? Math.max(120, Math.min(Plasmoid.configuration.panelMaxHeight || 600, panelContentItem ? panelContentItem.implicitHeight : 240))
+                ? (panelContentItem ? panelContentItem.implicitHeight : 240)
                 : root.expandedHeight
             opacity: root.popupOpen ? 1 : 0
             scale: root.popupOpen ? 1 : 0.96
 
             Behavior on opacity { NumberAnimation { duration: root.animationsEnabled ? Math.round(150 * root.animMultiplier) : 0; easing.type: Easing.OutCubic } }
-            Behavior on scale { NumberAnimation { duration: root.animationsEnabled ? Math.round(180 * root.animMultiplier) : 0; easing.type: Easing.OutCubic } }
+            Behavior on scale { NumberAnimation { duration: root.animationsEnabled ? Math.round(180 * root.animMultiplier) : 0; easing.type: Easing.OutBack } }
             Behavior on height { enabled: root.animationsEnabled && root.popupOpen; NumberAnimation { duration: root.dur(200); easing.type: Easing.OutCubic } }
             Behavior on width { enabled: root.animationsEnabled && root.popupOpen; NumberAnimation { duration: root.dur(200); easing.type: Easing.OutCubic } }
 
@@ -940,7 +1064,38 @@ PlasmoidItem {
 
                 anchors.fill: parent
                 hoverEnabled: true
+                cursorShape: Qt.ArrowCursor
                 onExited: if (root.popupCloseOnHoverExit) root.closePopup()
+            }
+
+            // ── Edge Interceptors (Completely Block Window Edge Drag Resizing) ──
+            MouseArea {
+                anchors.left: parent.left; anchors.right: parent.right; anchors.top: parent.top
+                height: 8; z: 9999
+                hoverEnabled: true; cursorShape: Qt.ArrowCursor
+                onPressed: (mouse) => mouse.accepted = true
+                onPositionChanged: (mouse) => mouse.accepted = true
+            }
+            MouseArea {
+                anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
+                height: 8; z: 9999
+                hoverEnabled: true; cursorShape: Qt.ArrowCursor
+                onPressed: (mouse) => mouse.accepted = true
+                onPositionChanged: (mouse) => mouse.accepted = true
+            }
+            MouseArea {
+                anchors.left: parent.left; anchors.top: parent.top; anchors.bottom: parent.bottom
+                width: 8; z: 9999
+                hoverEnabled: true; cursorShape: Qt.ArrowCursor
+                onPressed: (mouse) => mouse.accepted = true
+                onPositionChanged: (mouse) => mouse.accepted = true
+            }
+            MouseArea {
+                anchors.right: parent.right; anchors.top: parent.top; anchors.bottom: parent.bottom
+                width: 8; z: 9999
+                hoverEnabled: true; cursorShape: Qt.ArrowCursor
+                onPressed: (mouse) => mouse.accepted = true
+                onPositionChanged: (mouse) => mouse.accepted = true
             }
 
             Rectangle {
@@ -979,53 +1134,6 @@ PlasmoidItem {
                 }
             }
 
-            // ---- Resize grip (bottom-right) ----
-            Item {
-                id: resizeGrip
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                width: 18
-                height: 18
-                visible: root.panelEnabled && root.popupOpen
-
-                Canvas {
-                    anchors.fill: parent
-                    onPaint: {
-                        var ctx = getContext("2d")
-                        ctx.strokeStyle = Qt.rgba(1, 1, 1, 0.3)
-                        ctx.lineWidth = 1
-                        ctx.beginPath()
-                        ctx.moveTo(14, 4); ctx.lineTo(4, 14)
-                        ctx.moveTo(14, 8); ctx.lineTo(8, 14)
-                        ctx.moveTo(14, 12); ctx.lineTo(12, 14)
-                        ctx.stroke()
-                    }
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.SizeFDiagCursor
-                    property real lastX: 0
-                    property real lastY: 0
-
-                    onPressed: (mouse) => {
-                        lastX = mouse.x
-                        lastY = mouse.y
-                    }
-                    onPositionChanged: (mouse) => {
-                        var dx = mouse.x - lastX
-                        var dy = mouse.y - lastY
-                        lastX = mouse.x
-                        lastY = mouse.y
-                        Plasmoid.configuration.panelWidth =
-                            Math.max(240, Math.min(800,
-                                Plasmoid.configuration.panelWidth + dx))
-                        Plasmoid.configuration.panelMaxHeight =
-                            Math.max(120, Math.min(900,
-                                Plasmoid.configuration.panelMaxHeight + dy))
-                    }
-                }
-            }
         }
     }
 
@@ -1144,15 +1252,15 @@ PlasmoidItem {
                 SequentialAnimation on scale {
                     running: root.showGreenDot && root.animationsEnabled
                     loops: Animation.Infinite
-                    NumberAnimation { to: 1.35; duration: root.dur(900); easing.type: Easing.InOutSine }
-                    NumberAnimation { to: 1.0; duration: root.dur(900); easing.type: Easing.InOutSine }
+                    NumberAnimation { to: 1.2; duration: root.dur(1100); easing.type: Easing.InOutSine }
+                    NumberAnimation { to: 1.0; duration: root.dur(1100); easing.type: Easing.InOutSine }
                 }
 
                 SequentialAnimation on opacity {
                     running: root.showGreenDot && root.animationsEnabled
                     loops: Animation.Infinite
-                    NumberAnimation { to: 0.55; duration: root.dur(900); easing.type: Easing.InOutSine }
-                    NumberAnimation { to: 1.0; duration: root.dur(900); easing.type: Easing.InOutSine }
+                    NumberAnimation { to: 0.55; duration: root.dur(1100); easing.type: Easing.InOutSine }
+                    NumberAnimation { to: 1.0; duration: root.dur(1100); easing.type: Easing.InOutSine }
                 }
             }
 
@@ -1202,6 +1310,7 @@ PlasmoidItem {
                     text: root.unreadCount
                     color: "white"
                     font.bold: true
+                    font.features: {"tnum": 1}
                 }
             }
         }
@@ -1215,6 +1324,7 @@ PlasmoidItem {
             color: root.textPrimary
             font.pointSize: root.showSysStats ? 12 : 16
             font.weight: Font.Medium
+            font.features: {"tnum": 1}
         }
     }
 
@@ -1226,6 +1336,7 @@ PlasmoidItem {
             color: root.fpsStyle === "plain" ? root.textPrimary : root.accent
             font.pointSize: root.fpsStyle === "plain" ? 14 : 9
             font.weight: root.fpsStyle === "plain" ? Font.Medium : Font.Bold
+            font.features: {"tnum": 1}
         }
     }
 

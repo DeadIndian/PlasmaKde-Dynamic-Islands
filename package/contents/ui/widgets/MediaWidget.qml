@@ -47,8 +47,8 @@ Item {
 
             // Album Art
             Item {
-                implicitWidth: 64
-                implicitHeight: 64
+                implicitWidth: 48
+                implicitHeight: 48
 
                 Kirigami.ShadowedImage {
                     anchors.fill: parent
@@ -141,6 +141,7 @@ Item {
                     height: parent.height
                     radius: parent.radius
                     color: island ? island.accent : "#3498db"
+                    Behavior on width { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
                 }
 
                 MouseArea {
@@ -165,8 +166,11 @@ Item {
                 width: 24; height: 24
                 color: island ? island.textPrimary : "white"
                 opacity: (island && island.mediaContainer) ? 1 : 0.45
+                scale: tallPrevMouse.pressed ? 0.85 : 1.0
+                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
                 MouseArea {
+                    id: tallPrevMouse
                     anchors.fill: parent
                     onClicked: if (island && island.mediaContainer) island.mediaContainer.Previous()
                 }
@@ -177,8 +181,11 @@ Item {
                 width: 28; height: 28
                 color: island ? island.textPrimary : "white"
                 opacity: (island && island.mediaContainer) ? 1 : 0.45
+                scale: tallPlayMouse.pressed ? 0.85 : 1.0
+                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
                 MouseArea {
+                    id: tallPlayMouse
                     anchors.fill: parent
                     onClicked: if (island && island.mediaContainer) island.mediaContainer.PlayPause()
                 }
@@ -189,8 +196,11 @@ Item {
                 width: 24; height: 24
                 color: island ? island.textPrimary : "white"
                 opacity: (island && island.mediaContainer) ? 1 : 0.45
+                scale: tallNextMouse.pressed ? 0.85 : 1.0
+                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
                 MouseArea {
+                    id: tallNextMouse
                     anchors.fill: parent
                     onClicked: if (island && island.mediaContainer) island.mediaContainer.Next()
                 }
@@ -244,7 +254,9 @@ Item {
                 width: 20; height: 20
                 color: island ? island.textPrimary : "white"
                 opacity: (island && island.mediaContainer) ? 1 : 0.45
-                MouseArea { anchors.fill: parent; onClicked: if (island && island.mediaContainer) island.mediaContainer.Previous() }
+                scale: singlePrevMouse.pressed ? 0.85 : 1.0
+                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                MouseArea { id: singlePrevMouse; anchors.fill: parent; onClicked: if (island && island.mediaContainer) island.mediaContainer.Previous() }
             }
 
             Kirigami.Icon {
@@ -252,7 +264,9 @@ Item {
                 width: 24; height: 24
                 color: island ? island.textPrimary : "white"
                 opacity: (island && island.mediaContainer) ? 1 : 0.45
-                MouseArea { anchors.fill: parent; onClicked: if (island && island.mediaContainer) island.mediaContainer.PlayPause() }
+                scale: singlePlayMouse.pressed ? 0.85 : 1.0
+                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                MouseArea { id: singlePlayMouse; anchors.fill: parent; onClicked: if (island && island.mediaContainer) island.mediaContainer.PlayPause() }
             }
 
             Kirigami.Icon {
@@ -260,7 +274,9 @@ Item {
                 width: 20; height: 20
                 color: island ? island.textPrimary : "white"
                 opacity: (island && island.mediaContainer) ? 1 : 0.45
-                MouseArea { anchors.fill: parent; onClicked: if (island && island.mediaContainer) island.mediaContainer.Next() }
+                scale: singleNextMouse.pressed ? 0.85 : 1.0
+                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                MouseArea { id: singleNextMouse; anchors.fill: parent; onClicked: if (island && island.mediaContainer) island.mediaContainer.Next() }
             }
         }
 
@@ -298,9 +314,9 @@ Item {
         anchors.fill: parent
         visible: widget.isMiniPill
         radius: 16
-        color: (island && island.mediaPlaying) ? (island.accent || "#3498db") : Qt.rgba(1, 1, 1, 0.18)
+        color: (island && island.mediaPlaying) ? Qt.lighter(island.accent || "#3498db", 1.1) : Qt.rgba(1, 1, 1, 0.18)
         border.width: 1
-        border.color: Qt.rgba(1, 1, 1, 0.15)
+        border.color: (island && island.mediaPlaying) ? Qt.lighter(island.accent || "#3498db", 1.3) : Qt.rgba(1, 1, 1, 0.15)
 
         RowLayout {
             anchors.fill: parent
@@ -312,8 +328,11 @@ Item {
                 source: (island && island.mediaPlaying) ? "media-playback-pause" : "media-playback-start"
                 width: 18; height: 18
                 color: "white"
+                scale: pillPlayMouse.pressed ? 0.85 : 1.0
+                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
                 MouseArea {
+                    id: pillPlayMouse
                     anchors.fill: parent
                     onClicked: if (island && island.mediaContainer) island.mediaContainer.PlayPause()
                 }
