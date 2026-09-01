@@ -165,6 +165,84 @@ function fits(occ, col, row, spanW, spanH, cols) {
     return true;
 }
 
+// First free slot in reading order. Rows grow on demand so this always finds
+// somewhere; MAX_ROWS only stops a runaway loop on a corrupted grid.
+function findFreeSlot(occ, spanW, spanH, cols) {
+    var w = Math.max(1, Math.min(cols, spanW || 1));
+    var h = Math.max(1, spanH || 1);
+    for (var r = 0; r < MAX_ROWS; r++) {
+        for (var c = 0; c <= cols - w; c++) {
+            if (fits(occ, c, r, w, h, cols)) {
+                return { col: c, row: r };
+            }
+        }
+    }
+    return { col: 0, row: 0 };
+}
+
+// Turns a list of widgets into a laid-out grid. Two passes: honour every explicit
+// placement that still fits, sliding a widget left when its span no longer
+// reaches the right edge; then auto-place whatever is left in reading order.
+// Pure — the caller writes the returned values back to the model.
+function resolvePlacements(items, cols) {
+    var list = items || [];
+    var out = [];
+    var i;
+
+    for (i = 0; i < list.length; i++) {
+        var src = list[i] || {};
+        out.push({
+            id: src.id,
+            col: (src.col === undefined || src.col === null) ? -1 : src.col,
+            row: (src.row === undefined || src.row === null) ? -1 : src.row,
+            spanW: Math.max(1, Math.min(cols, src.spanW || 1)),
+            spanH: Math.max(1, src.spanH || 1)
+        });
+    }
+
+    var occ = [];
+
+    function mark(item, index) {
+        for (var dr = 0; dr < item.spanH; dr++) {
+            var r = item.row + dr;
+            if (!occ[r]) occ[r] = [];
+            for (var dc = 0; dc < item.spanW; dc++) {
+                occ[r][item.col + dc] = index;
+            }
+        }
+    }
+
+    for (i = 0; i < out.length; i++) {
+        var placed = out[i];
+        if (placed.col < 0 || placed.row < 0) continue;
+        var col = Math.max(0, Math.min(placed.col, cols - placed.spanW));
+        if (fits(occ, col, placed.row, placed.spanW, placed.spanH, cols)) {
+            placed.col = col;
+            mark(placed, i);
+        } else {
+            placed.col = -1;
+            placed.row = -1;
+        }
+    }
+
+    for (i = 0; i < out.length; i++) {
+        var loose = out[i];
+        if (loose.col >= 0 && loose.row >= 0) continue;
+        var slot = findFreeSlot(occ, loose.spanW, loose.spanH, cols);
+        loose.col = slot.col;
+        loose.row = slot.row;
+        mark(loose, i);
+    }
+
+    var rows = 0;
+    for (i = 0; i < out.length; i++) {
+        var bottom = out[i].row + out[i].spanH;
+        if (bottom > rows) rows = bottom;
+    }
+
+    return { items: out, rows: rows };
+}
+
 function cycleSpan2D(w, h, maxCols) {
     var spanW = parseInt(w, 10) || 1;
     var spanH = parseInt(h, 10) || 1;

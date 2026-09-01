@@ -23,6 +23,8 @@ new Function(
         "\nexports.parseCell = parseCell;" +
         "\nexports.buildOccupancy = buildOccupancy;" +
         "\nexports.fits = fits;" +
+        "\nexports.findFreeSlot = findFreeSlot;" +
+        "\nexports.resolvePlacements = resolvePlacements;" +
         "\nexports.cycleSpan2D = cycleSpan2D;" +
         "\nexports.mmss = mmss;" +
         "\nexports.moveItem = moveItem;",
@@ -149,5 +151,76 @@ assert.equal(U.fits(occ4, 3, 0, 1, 1, 4), true, "last column is in bounds");
 assert.equal(U.fits(occ4, -1, 0, 1, 1, 4), false, "negative col");
 assert.equal(U.fits(occ4, 0, -1, 1, 1, 4), false, "negative row");
 assert.equal(U.fits(occ4, 0, 5, 3, 2, 4), true, "empty rows below the content");
+
+// findFreeSlot
+assert.deepEqual(U.findFreeSlot([], 1, 1, 4), { col: 0, row: 0 });
+assert.deepEqual(U.findFreeSlot(occ4, 1, 1, 4), { col: 2, row: 0 });
+assert.deepEqual(U.findFreeSlot(occ4, 3, 1, 4), { col: 0, row: 3 }, "first row with 3 free columns");
+
+// resolvePlacements — a fully legacy config auto-places in reading order, which
+// is byte-identical to what the old greedy packer produced.
+const legacySix = [
+    { id: "network", col: -1, row: -1, spanW: 1, spanH: 1 },
+    { id: "bluetooth", col: -1, row: -1, spanW: 1, spanH: 1 },
+    { id: "dnd", col: -1, row: -1, spanW: 1, spanH: 1 },
+    { id: "nightlight", col: -1, row: -1, spanW: 1, spanH: 1 },
+    { id: "volume", col: -1, row: -1, spanW: 3, spanH: 1 },
+    { id: "media", col: -1, row: -1, spanW: 3, spanH: 2 }
+];
+const resolvedLegacy = U.resolvePlacements(legacySix, 4);
+assert.deepEqual(
+    resolvedLegacy.items.map((i) => [i.id, i.col, i.row]),
+    [
+        ["network", 0, 0],
+        ["bluetooth", 1, 0],
+        ["dnd", 2, 0],
+        ["nightlight", 3, 0],
+        ["volume", 0, 1],
+        ["media", 0, 2]
+    ],
+);
+assert.equal(resolvedLegacy.rows, 4);
+
+// Explicit placements are honoured, holes are preserved.
+const holes = [
+    { id: "network", col: 3, row: 2, spanW: 1, spanH: 1 },
+    { id: "media", col: 0, row: 0, spanW: 3, spanH: 2 }
+];
+const resolvedHoles = U.resolvePlacements(holes, 4);
+assert.deepEqual(resolvedHoles.items.map((i) => [i.id, i.col, i.row]), [
+    ["network", 3, 2],
+    ["media", 0, 0]
+]);
+assert.equal(resolvedHoles.rows, 3);
+
+// Input is not mutated.
+assert.equal(holes[0].col, 3);
+
+// 4 -> 2 column shrink: spans clamp to the new width and columns slide left.
+const shrunk = U.resolvePlacements(holes, 2);
+assert.deepEqual(shrunk.items.map((i) => [i.id, i.col, i.row, i.spanW, i.spanH]), [
+    ["network", 1, 2, 1, 1],
+    ["media", 0, 0, 2, 2]
+]);
+assert.equal(shrunk.rows, 3);
+
+// A widget resized past the right edge slides left rather than overflowing — this
+// is the pass-1 clamp that keeps a resize at column 3 legal.
+const resizedEdge = U.resolvePlacements([
+    { id: "network", col: 3, row: 0, spanW: 2, spanH: 1 }
+], 4);
+assert.deepEqual(resizedEdge.items.map((i) => [i.col, i.row, i.spanW]), [[2, 0, 2]]);
+
+// A widget whose explicit cell is taken falls through to auto-placement, and it
+// is the loser that moves, never the widget already sitting there.
+const clash = [
+    { id: "media", col: 0, row: 0, spanW: 3, spanH: 2 },
+    { id: "volume", col: 0, row: 1, spanW: 3, spanH: 1 }
+];
+const resolvedClash = U.resolvePlacements(clash, 4);
+assert.deepEqual(resolvedClash.items.map((i) => [i.id, i.col, i.row]), [
+    ["media", 0, 0],
+    ["volume", 0, 2]
+]);
 
 console.log("islandutils: all assertions passed");
