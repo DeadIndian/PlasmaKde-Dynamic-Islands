@@ -20,6 +20,7 @@ new Function(
         "\nexports.serializeWidgetList = serializeWidgetList;" +
         "\nexports.parseWidgetSpecs = parseWidgetSpecs;" +
         "\nexports.serializeWidgetSpecs = serializeWidgetSpecs;" +
+        "\nexports.parseCell = parseCell;" +
         "\nexports.cycleSpan2D = cycleSpan2D;" +
         "\nexports.mmss = mmss;" +
         "\nexports.moveItem = moveItem;",
@@ -47,15 +48,48 @@ assert.deepEqual(U.parseWidgetList("media,nope,system", valid), ["media", "syste
 assert.deepEqual(U.parseWidgetList("media,media,system", valid), ["media", "system"]);
 assert.deepEqual(U.parseWidgetList("", valid), []);
 
-// parseWidgetSpecs & serializeWidgetSpecs 2D
-const specStr = "network:1:1,volume:3:1,media:2:2";
-const parsedSpecs = U.parseWidgetSpecs(specStr, valid);
-assert.deepEqual(parsedSpecs, [
-    { id: "network", spanW: 1, spanH: 1 },
-    { id: "volume", spanW: 3, spanH: 1 },
-    { id: "media", spanW: 2, spanH: 2 }
+// parseWidgetSpecs & serializeWidgetSpecs — 5-field explicit placement
+const placedStr = "network:0:0:1:1,volume:0:1:3:1,media:0:2:2:2";
+const placed = U.parseWidgetSpecs(placedStr, valid);
+assert.deepEqual(placed, [
+    { id: "network", col: 0, row: 0, spanW: 1, spanH: 1 },
+    { id: "volume", col: 0, row: 1, spanW: 3, spanH: 1 },
+    { id: "media", col: 0, row: 2, spanW: 2, spanH: 2 }
 ]);
-assert.equal(U.serializeWidgetSpecs(parsedSpecs), "network:1:1,volume:3:1,media:2:2");
+assert.equal(U.serializeWidgetSpecs(placed), placedStr);
+
+// Legacy 3-field entries parse as unplaced.
+const legacy = U.parseWidgetSpecs("network:1:1,volume:3:1,media:2:2", valid);
+assert.deepEqual(legacy, [
+    { id: "network", col: -1, row: -1, spanW: 1, spanH: 1 },
+    { id: "volume", col: -1, row: -1, spanW: 3, spanH: 1 },
+    { id: "media", col: -1, row: -1, spanW: 2, spanH: 2 }
+]);
+assert.equal(
+    U.serializeWidgetSpecs(legacy),
+    "network:-1:-1:1:1,volume:-1:-1:3:1,media:-1:-1:2:2",
+);
+
+// "-1" survives a round-trip as unplaced rather than becoming a literal cell.
+assert.deepEqual(U.parseWidgetSpecs("network:-1:-1:1:1", valid), [
+    { id: "network", col: -1, row: -1, spanW: 1, spanH: 1 }
+]);
+
+// Out-of-range col/row degrade to unplaced, field by field.
+assert.deepEqual(U.parseWidgetSpecs("network:9:0:1:1,volume:0:999:3:1", valid), [
+    { id: "network", col: -1, row: 0, spanW: 1, spanH: 1 },
+    { id: "volume", col: 0, row: -1, spanW: 3, spanH: 1 }
+]);
+
+// Legacy short forms still fall back to catalog defaults.
+const wDefaults = { media: 3, network: 1 };
+const hDefaults = { media: 2, network: 1 };
+assert.deepEqual(U.parseWidgetSpecs("media", valid, wDefaults, hDefaults), [
+    { id: "media", col: -1, row: -1, spanW: 3, spanH: 2 }
+]);
+assert.deepEqual(U.parseWidgetSpecs("media:2", valid, wDefaults, hDefaults), [
+    { id: "media", col: -1, row: -1, spanW: 2, spanH: 2 }
+]);
 
 // cycleSpan2D
 assert.deepEqual(U.cycleSpan2D(1, 1), { spanW: 2, spanH: 1 });

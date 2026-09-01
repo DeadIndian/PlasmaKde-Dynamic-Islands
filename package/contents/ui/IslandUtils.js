@@ -3,6 +3,21 @@
 // Pure helpers shared by the island and its panel widgets. Kept free of QML
 // types so they can be exercised by tests/islandutils.test.mjs under node.
 
+// Grid bounds. MAX_ROWS is a guard against a corrupted config string, not a
+// layout limit: rows grow on demand.
+var MAX_COLS = 4;
+var MAX_ROWS = 64;
+
+// Parses an explicit col/row field. Anything non-numeric or out of range becomes
+// -1, which means "place this widget automatically".
+function parseCell(field, maxValue) {
+    var v = parseInt(String(field).trim(), 10);
+    if (isNaN(v) || v < 0 || v > maxValue) {
+        return -1;
+    }
+    return v;
+}
+
 // Substitutes {token} placeholders from `vals`.
 function formatTemplate(tpl, vals) {
     if (!tpl) {
@@ -38,7 +53,10 @@ function serializeWidgetList(ids) {
     return (ids || []).join(",");
 }
 
-// Parses grid items formatted as "id:spanW:spanH", "id:spanW", or "id".
+// Parses grid items formatted as "id:col:row:spanW:spanH". Shorter forms are
+// legacy ("id:spanW:spanH", "id:spanW", "id") and yield col/row -1, meaning the
+// placement engine positions them. Field count is a safe discriminator because
+// serializeWidgetSpecs only ever emits five fields.
 function parseWidgetSpecs(str, validIds, defaultWFn, defaultHFn) {
     var out = [];
     var allowed = validIds || [];
@@ -53,29 +71,43 @@ function parseWidgetSpecs(str, validIds, defaultWFn, defaultHFn) {
         if (id.length === 0 || (allowed.length > 0 && allowed.indexOf(id) === -1) || seen.indexOf(id) !== -1) {
             continue;
         }
+
+        var col = -1;
+        var row = -1;
+        var wField = 1;
+        var hField = 2;
         var spanW = 3;
         var spanH = 1;
 
-        if (pair.length > 1) {
-            var parsedW = parseInt(pair[1].trim(), 10);
-            if (parsedW >= 1 && parsedW <= 4) spanW = parsedW;
+        if (pair.length >= 5) {
+            col = parseCell(pair[1], MAX_COLS - 1);
+            row = parseCell(pair[2], MAX_ROWS - 1);
+            wField = 3;
+            hField = 4;
+        }
+
+        if (pair.length > wField) {
+            var parsedW = parseInt(pair[wField].trim(), 10);
+            if (parsedW >= 1 && parsedW <= MAX_COLS) spanW = parsedW;
         } else if (defaultWFn) {
             spanW = typeof defaultWFn === "function" ? defaultWFn(id) : (defaultWFn[id] || 3);
         }
 
-        if (pair.length > 2) {
-            var parsedH = parseInt(pair[2].trim(), 10);
+        if (pair.length > hField) {
+            var parsedH = parseInt(pair[hField].trim(), 10);
             if (parsedH >= 1 && parsedH <= 3) spanH = parsedH;
         } else if (defaultHFn) {
             spanH = typeof defaultHFn === "function" ? defaultHFn(id) : (defaultHFn[id] || 1);
         }
 
         seen.push(id);
-        out.push({ id: id, spanW: spanW, spanH: spanH });
+        out.push({ id: id, col: col, row: row, spanW: spanW, spanH: spanH });
     }
     return out;
 }
 
+// Always emits five fields, which is what makes field count a safe format
+// discriminator on the way back in.
 function serializeWidgetSpecs(specs) {
     if (!specs || !specs.length) return "";
     var parts = [];
@@ -84,7 +116,9 @@ function serializeWidgetSpecs(specs) {
         if (typeof item === "string") {
             parts.push(item);
         } else if (item && item.id) {
-            parts.push(item.id + ":" + (item.spanW || 3) + ":" + (item.spanH || 1));
+            var col = (item.col === undefined || item.col === null) ? -1 : item.col;
+            var row = (item.row === undefined || item.row === null) ? -1 : item.row;
+            parts.push(item.id + ":" + col + ":" + row + ":" + (item.spanW || 3) + ":" + (item.spanH || 1));
         }
     }
     return parts.join(",");
