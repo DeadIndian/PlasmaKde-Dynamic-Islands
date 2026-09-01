@@ -124,6 +124,47 @@ function serializeWidgetSpecs(specs) {
     return parts.join(",");
 }
 
+// Maps every cell a widget covers to that widget's index. Sparse: occ[row][col].
+// `skipIndex` leaves one widget out, which is how a drag asks "would this fit if
+// the card I am holding were not there?".
+function buildOccupancy(items, cols, skipIndex) {
+    var occ = [];
+    var list = items || [];
+    var skip = (skipIndex === undefined || skipIndex === null) ? -1 : skipIndex;
+    for (var i = 0; i < list.length; i++) {
+        if (i === skip) continue;
+        var it = list[i];
+        if (!it || it.col < 0 || it.row < 0) continue;
+        var w = Math.max(1, Math.min(cols, it.spanW || 1));
+        var h = Math.max(1, it.spanH || 1);
+        for (var dr = 0; dr < h; dr++) {
+            var r = it.row + dr;
+            if (!occ[r]) occ[r] = [];
+            for (var dc = 0; dc < w; dc++) {
+                occ[r][it.col + dc] = i;
+            }
+        }
+    }
+    return occ;
+}
+
+// True when a spanW x spanH block sits inside the grid at (col,row) without
+// overlapping anything in `occ`.
+function fits(occ, col, row, spanW, spanH, cols) {
+    if (col < 0 || row < 0) return false;
+    var w = Math.max(1, spanW || 1);
+    var h = Math.max(1, spanH || 1);
+    if (col + w > cols) return false;
+    for (var dr = 0; dr < h; dr++) {
+        var cells = occ[row + dr];
+        if (!cells) continue;
+        for (var dc = 0; dc < w; dc++) {
+            if (cells[col + dc] !== undefined) return false;
+        }
+    }
+    return true;
+}
+
 function cycleSpan2D(w, h, maxCols) {
     var spanW = parseInt(w, 10) || 1;
     var spanH = parseInt(h, 10) || 1;

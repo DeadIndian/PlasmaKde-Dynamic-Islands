@@ -21,6 +21,8 @@ new Function(
         "\nexports.parseWidgetSpecs = parseWidgetSpecs;" +
         "\nexports.serializeWidgetSpecs = serializeWidgetSpecs;" +
         "\nexports.parseCell = parseCell;" +
+        "\nexports.buildOccupancy = buildOccupancy;" +
+        "\nexports.fits = fits;" +
         "\nexports.cycleSpan2D = cycleSpan2D;" +
         "\nexports.mmss = mmss;" +
         "\nexports.moveItem = moveItem;",
@@ -117,5 +119,35 @@ assert.equal(U.mmss(3600), "1:00:00");
 // moveItem
 const base = ["a", "b", "c", "d"];
 assert.deepEqual(U.moveItem(base, 0, 2), ["b", "c", "a", "d"]);
+
+// buildOccupancy & fits
+const grid4 = [
+    { id: "network", col: 0, row: 0, spanW: 1, spanH: 1 },
+    { id: "bluetooth", col: 1, row: 0, spanW: 1, spanH: 1 },
+    { id: "media", col: 0, row: 1, spanW: 3, spanH: 2 }
+];
+const occ4 = U.buildOccupancy(grid4, 4);
+assert.equal(occ4[0][0], 0);
+assert.equal(occ4[0][1], 1);
+assert.equal(occ4[0][2], undefined);
+assert.equal(occ4[2][2], 2, "media spans down into row 2");
+assert.equal(occ4[1][3], undefined, "media is 3 wide, column 3 is free");
+
+// skipIndex lifts one widget out, which is what a drag needs.
+const occNoMedia = U.buildOccupancy(grid4, 4, 2);
+assert.equal(occNoMedia[1], undefined);
+assert.equal(occNoMedia[0][0], 0);
+
+// Unplaced widgets occupy nothing.
+assert.deepEqual(U.buildOccupancy([{ id: "x", col: -1, row: -1, spanW: 1, spanH: 1 }], 4), []);
+
+assert.equal(U.fits(occ4, 2, 0, 1, 1, 4), true, "free cell");
+assert.equal(U.fits(occ4, 0, 0, 1, 1, 4), false, "occupied cell");
+assert.equal(U.fits(occ4, 3, 1, 1, 1, 4), true, "beside media");
+assert.equal(U.fits(occ4, 2, 0, 3, 1, 4), false, "overflows the right edge");
+assert.equal(U.fits(occ4, 3, 0, 1, 1, 4), true, "last column is in bounds");
+assert.equal(U.fits(occ4, -1, 0, 1, 1, 4), false, "negative col");
+assert.equal(U.fits(occ4, 0, -1, 1, 1, 4), false, "negative row");
+assert.equal(U.fits(occ4, 0, 5, 3, 2, 4), true, "empty rows below the content");
 
 console.log("islandutils: all assertions passed");
