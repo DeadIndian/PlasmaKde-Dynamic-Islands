@@ -25,6 +25,8 @@ new Function(
         "\nexports.fits = fits;" +
         "\nexports.findFreeSlot = findFreeSlot;" +
         "\nexports.resolvePlacements = resolvePlacements;" +
+        "\nexports.cellFromPixel = cellFromPixel;" +
+        "\nexports.dropResult = dropResult;" +
         "\nexports.cycleSpan2D = cycleSpan2D;" +
         "\nexports.mmss = mmss;" +
         "\nexports.moveItem = moveItem;",
@@ -222,5 +224,41 @@ assert.deepEqual(resolvedClash.items.map((i) => [i.id, i.col, i.row]), [
     ["media", 0, 0],
     ["volume", 0, 2]
 ]);
+
+// cellFromPixel — rounds to the nearest slot, so a card need not be aligned.
+assert.deepEqual(U.cellFromPixel(0, 0, 125, 54, 10), { col: 0, row: 0 });
+assert.deepEqual(U.cellFromPixel(135, 64, 125, 54, 10), { col: 1, row: 1 });
+assert.deepEqual(U.cellFromPixel(80, 0, 125, 54, 10), { col: 1, row: 0 }, "past halfway rounds up");
+assert.deepEqual(U.cellFromPixel(60, 0, 125, 54, 10), { col: 0, row: 0 }, "before halfway rounds down");
+
+// dropResult
+const drop = [
+    { id: "network", col: 0, row: 0, spanW: 1, spanH: 1 },
+    { id: "bluetooth", col: 1, row: 0, spanW: 1, spanH: 1 },
+    { id: "media", col: 0, row: 1, spanW: 3, spanH: 2 }
+];
+
+// Free cell -> move.
+assert.deepEqual(U.dropResult(drop, 0, 2, 0, 4), { action: "move", col: 2, row: 0 });
+
+// Same span, single occupant -> swap onto that occupant's exact cell.
+assert.deepEqual(U.dropResult(drop, 0, 1, 0, 4), { action: "swap", col: 1, row: 0, withIndex: 1 });
+
+// Different span -> reject, but still report a clamped preview cell.
+assert.deepEqual(U.dropResult(drop, 0, 1, 1, 4), { action: "reject", col: 1, row: 1 });
+
+// A wide card dropped over two 1x1 widgets overlaps two occupants -> reject.
+assert.deepEqual(U.dropResult(drop, 2, 0, 0, 4), { action: "reject", col: 0, row: 0 });
+
+// Dropping on itself is a move to the same cell; nothing else has to special-case it.
+assert.deepEqual(U.dropResult(drop, 0, 0, 0, 4), { action: "move", col: 0, row: 0 });
+
+// Out of bounds clamps instead of rejecting.
+assert.deepEqual(U.dropResult(drop, 2, 7, 0, 4), { action: "reject", col: 1, row: 0 });
+assert.deepEqual(U.dropResult(drop, 0, 9, 9, 4), { action: "move", col: 3, row: 9 });
+assert.deepEqual(U.dropResult(drop, 0, -4, -4, 4), { action: "move", col: 0, row: 0 });
+
+// An unknown index is refused rather than throwing.
+assert.equal(U.dropResult(drop, 99, 0, 0, 4).action, "reject");
 
 console.log("islandutils: all assertions passed");

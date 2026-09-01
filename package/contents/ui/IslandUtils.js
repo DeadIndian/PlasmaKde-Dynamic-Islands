@@ -243,6 +243,71 @@ function resolvePlacements(items, cols) {
     return { items: out, rows: rows };
 }
 
+// Nearest cell to a pixel offset. Round rather than floor: the card snaps to the
+// closest slot instead of demanding precise alignment. May be out of bounds —
+// dropResult clamps.
+function cellFromPixel(x, y, colW, rowH, gap) {
+    var stepX = (colW || 1) + (gap || 0);
+    var stepY = (rowH || 1) + (gap || 0);
+    return {
+        col: Math.round((x || 0) / stepX),
+        row: Math.round((y || 0) / stepY)
+    };
+}
+
+// Decides what dropping `dragIndex` at (col,row) does. The target is clamped into
+// the grid before collisions are checked, so "reject" always means a real
+// collision rather than an overshoot, and every outcome carries a cell the caller
+// can draw a preview at.
+//
+// A swap is only offered when the dragged footprint covers exactly one widget of
+// identical span; that exchange cannot fail, because the hole the dragged card
+// leaves behind is the same shape as the occupant.
+function dropResult(items, dragIndex, col, row, cols) {
+    var list = items || [];
+    var dragged = list[dragIndex];
+    if (!dragged) {
+        return { action: "reject", col: 0, row: 0 };
+    }
+
+    var w = Math.max(1, Math.min(cols, dragged.spanW || 1));
+    var h = Math.max(1, dragged.spanH || 1);
+    var c = Math.max(0, Math.min(col, cols - w));
+    var r = Math.max(0, Math.min(row, MAX_ROWS - h));
+
+    var occ = buildOccupancy(list, cols, dragIndex);
+
+    if (fits(occ, c, r, w, h, cols)) {
+        return { action: "move", col: c, row: r };
+    }
+
+    var occupant = -1;
+    for (var dr = 0; dr < h; dr++) {
+        var cells = occ[r + dr];
+        if (!cells) continue;
+        for (var dc = 0; dc < w; dc++) {
+            var hit = cells[c + dc];
+            if (hit === undefined) continue;
+            if (occupant === -1) {
+                occupant = hit;
+            } else if (occupant !== hit) {
+                return { action: "reject", col: c, row: r };
+            }
+        }
+    }
+
+    if (occupant < 0) {
+        return { action: "reject", col: c, row: r };
+    }
+
+    var other = list[occupant];
+    if (other.spanW !== dragged.spanW || other.spanH !== dragged.spanH) {
+        return { action: "reject", col: c, row: r };
+    }
+
+    return { action: "swap", col: other.col, row: other.row, withIndex: occupant };
+}
+
 function cycleSpan2D(w, h, maxCols) {
     var spanW = parseInt(w, 10) || 1;
     var spanH = parseInt(h, 10) || 1;
