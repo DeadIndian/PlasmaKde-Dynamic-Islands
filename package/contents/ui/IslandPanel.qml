@@ -17,6 +17,29 @@ Item {
     property bool dragging: false
     property int activeDragIndex: -1
 
+    // Live drag offset. The delegate adds these to its layout position through a
+    // binding, so nothing ever assigns x/y directly and the binding to the
+    // placement engine survives every drag.
+    property real dragTransX: 0
+    property real dragTransY: 0
+    property real autoScrollAccum: 0
+    property int dragSpanW: 1
+    property int dragSpanH: 1
+
+    // Where the dragged card sat when the gesture began, in content coordinates.
+    property real dragBaseX: 0
+    property real dragBaseY: 0
+
+    readonly property real dragCardX: dragBaseX + dragTransX
+    readonly property real dragCardY: dragBaseY + dragTransY + autoScrollAccum
+    readonly property real dragCardH: Math.round(dragSpanH * rowHeight + (dragSpanH - 1) * gap)
+
+    // Previewed drop, recomputed on every drag move.
+    property string dropAction: "move"
+    property int dropCol: 0
+    property int dropRow: 0
+    property int dropSwapIndex: -1
+
     // ── Config & Grid Layout Shortcuts ────────────────────────────────
     readonly property int pad: Plasmoid.configuration.panelPadding || 12
     readonly property int gap: Plasmoid.configuration.panelSpacing || 10
@@ -40,82 +63,50 @@ Item {
     implicitHeight: Math.round(Math.min(maxH, totalContentHeight))
     implicitWidth: totalWidth
 
-    // ── 2D Grid Packing Engine ─────────────────────────────────────────
-    function updateLayoutPositions() {
-        if (!gridModel) return;
-        var cols = columns;
-        var g = gap;
-        var colW = colWidth;
-        var rowH = 54;
+    // ── Layout ─────────────────────────────────────────────────────────
+    // Cells come from Utils.resolvePlacements; this only turns them into pixels
+    // and writes them back for the delegates to bind to.
+    readonly property real rowHeight: baseRowHeight
+    readonly property bool showGrips: Plasmoid.configuration.panelShowGrips
 
-        var grid = [];
-
-        function isFree(r, c, w, h) {
-            for (var dr = 0; dr < h; dr++) {
-                for (var dc = 0; dc < w; dc++) {
-                    var row = r + dr;
-                    var col = c + dc;
-                    if (col >= cols) return false;
-                    if (grid[row] && grid[row][col]) return false;
-                }
-            }
-            return true;
+    function applyLayout() {
+        if (!gridModel || gridModel.count === 0) return
+        const resolved = Utils.resolvePlacements(currentSpecs(), columns)
+        for (let i = 0; i < resolved.items.length; i++) {
+            const it = resolved.items[i]
+            gridModel.setProperty(i, "col", it.col)
+            gridModel.setProperty(i, "row", it.row)
+            gridModel.setProperty(i, "spanW", it.spanW)
+            gridModel.setProperty(i, "spanH", it.spanH)
+            gridModel.setProperty(i, "layoutX", Math.round(it.col * (colWidth + gap)))
+            gridModel.setProperty(i, "layoutY", Math.round(it.row * (rowHeight + gap)))
+            gridModel.setProperty(i, "layoutW", Math.round(it.spanW * colWidth + (it.spanW - 1) * gap))
+            gridModel.setProperty(i, "layoutH", Math.round(it.spanH * rowHeight + (it.spanH - 1) * gap))
         }
-
-        function mark(r, c, w, h) {
-            for (var dr = 0; dr < h; dr++) {
-                for (var dc = 0; dc < w; dc++) {
-                    var row = r + dr;
-                    var col = c + dc;
-                    if (!grid[row]) grid[row] = [];
-                    grid[row][col] = true;
-                }
-            }
-        }
-
-        var totalH = 0;
-
-        for (var i = 0; i < gridModel.count; i++) {
-            var item = gridModel.get(i);
-            var w = Math.min(cols, Math.max(1, item.spanW || 1));
-            var h = Math.max(1, item.spanH || 1);
-
-            var placed = false;
-            var r = 0;
-            while (!placed) {
-                for (var c = 0; c <= cols - w; c++) {
-                    if (isFree(r, c, w, h)) {
-                        mark(r, c, w, h);
-
-                        var posX = Math.round(c * (colW + g));
-                        var posY = Math.round(r * (rowH + g));
-                        var itemW = Math.round(w * colW + (w - 1) * g);
-                        var itemH = Math.round(h * rowH + (h - 1) * g);
-
-                        gridModel.setProperty(i, "layoutX", posX);
-                        gridModel.setProperty(i, "layoutY", posY);
-                        gridModel.setProperty(i, "layoutW", itemW);
-                        gridModel.setProperty(i, "layoutH", itemH);
-
-                        if (posY + itemH > totalH) {
-                            totalH = posY + itemH;
-                        }
-
-                        placed = true;
-                        break;
-                    }
-                }
-                r++;
-            }
-        }
-
-        panel.calculatedGridHeight = totalH;
+        calculatedGridHeight = resolved.rows > 0
+            ? Math.round(resolved.rows * rowHeight + (resolved.rows - 1) * gap)
+            : rowHeight
     }
 
-    onColWidthChanged: updateLayoutPositions()
-    onAvailableWidthChanged: updateLayoutPositions()
-    onGapChanged: updateLayoutPositions()
-    onColumnsChanged: rebuild()
+    function cancelDrag() {
+        activeDragIndex = -1
+        dragging = false
+        dragTransX = 0
+        dragTransY = 0
+        autoScrollAccum = 0
+        dropSwapIndex = -1
+    }
+
+    onColWidthChanged: applyLayout()
+    onAvailableWidthChanged: applyLayout()
+    onGapChanged: applyLayout()
+
+    // A column change invalidates any drop being previewed against the old grid.
+    onColumnsChanged: {
+        cancelDrag()
+        applyLayout()
+        persistOrder()
+    }
 
     // ── Model Management ─────────────────────────────────────────────
     property var rawWidgetConfig: Plasmoid.configuration.panelWidgets !== undefined && Plasmoid.configuration.panelWidgets !== "" ? Plasmoid.configuration.panelWidgets : "network:1:1,bluetooth:1:1,dnd:1:1,nightlight:1:1,darkmode:1:1,power:1:1,volume:3:1,brightness:3:1,media:3:2,system:3:2"
@@ -124,7 +115,7 @@ Item {
         let specs = []
         for (let i = 0; i < gridModel.count; i++) {
             const item = gridModel.get(i)
-            specs.push({ id: item.widgetId, spanW: item.spanW, spanH: item.spanH })
+            specs.push({ id: item.widgetId, col: item.col, row: item.row, spanW: item.spanW, spanH: item.spanH })
         }
         return specs
     }
@@ -145,6 +136,8 @@ Item {
             }
             gridModel.append({
                 widgetId: specs[i].id,
+                col: specs[i].col,
+                row: specs[i].row,
                 spanW: sw,
                 spanH: sh,
                 layoutX: 0,
@@ -153,12 +146,17 @@ Item {
                 layoutH: 48
             })
         }
-        updateLayoutPositions()
+        applyLayout()
     }
 
     function persistOrder() {
-        const specs = currentSpecs()
-        Plasmoid.configuration.panelWidgets = Utils.serializeWidgetSpecs(specs)
+        // Never write an empty layout: a change signal can fire before rebuild()
+        // has populated the model.
+        if (gridModel.count === 0) return
+        const next = Utils.serializeWidgetSpecs(currentSpecs())
+        if (next !== Plasmoid.configuration.panelWidgets) {
+            Plasmoid.configuration.panelWidgets = next
+        }
     }
 
     function addWidget(id) {
@@ -167,8 +165,12 @@ Item {
         if (id === "timer" && spanW === 1 && spanH === 1) {
             spanW = 2
         }
+        // col/row -1 hands placement to the auto-placer, which fills the first
+        // free slot in reading order.
         gridModel.append({
             widgetId: id,
+            col: -1,
+            row: -1,
             spanW: spanW,
             spanH: spanH,
             layoutX: 0,
@@ -176,30 +178,43 @@ Item {
             layoutW: 100,
             layoutH: 48
         })
-        updateLayoutPositions()
+        applyLayout()
         persistOrder()
     }
 
     function removeWidget(index) {
         if (gridModel.count > 1 && index >= 0 && index < gridModel.count) {
             gridModel.remove(index)
-            updateLayoutPositions()
+            applyLayout()
             persistOrder()
         }
     }
 
     function cycleWidgetSpan(index) {
-        if (index >= 0 && index < gridModel.count) {
-            const current = gridModel.get(index)
-            let next = Utils.cycleSpan2D(current.spanW, current.spanH, panel.columns)
-            if (current.widgetId === "timer" && next.spanW === 1 && next.spanH === 1) {
-                next = { spanW: 2, spanH: 1 }
-            }
-            gridModel.setProperty(index, "spanW", next.spanW)
-            gridModel.setProperty(index, "spanH", next.spanH)
-            updateLayoutPositions()
-            persistOrder()
+        if (index < 0 || index >= gridModel.count) return
+        const current = gridModel.get(index)
+        let next = Utils.cycleSpan2D(current.spanW, current.spanH, panel.columns)
+        if (current.widgetId === "timer" && next.spanW === 1 && next.spanH === 1) {
+            next = { spanW: 2, spanH: 1 }
         }
+        gridModel.setProperty(index, "spanW", next.spanW)
+        gridModel.setProperty(index, "spanH", next.spanH)
+
+        // The resized widget yields, never its neighbours. Slide it left to fit,
+        // and if it still collides hand it to the auto-placer. resolvePlacements
+        // alone would not do this: it resolves conflicts by model order, which
+        // could displace a widget the user did not touch.
+        const occ = Utils.buildOccupancy(currentSpecs(), panel.columns, index)
+        const clamped = Math.max(0, Math.min(current.col, panel.columns - next.spanW))
+        if (Utils.fits(occ, clamped, current.row, next.spanW, next.spanH, panel.columns)) {
+            gridModel.setProperty(index, "col", clamped)
+        } else {
+            gridModel.setProperty(index, "col", -1)
+            gridModel.setProperty(index, "row", -1)
+        }
+
+        applyLayout()
+        persistOrder()
     }
 
     onRawWidgetConfigChanged: {
