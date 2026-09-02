@@ -97,6 +97,16 @@ Item {
         dropSwapIndex = -1
     }
 
+    // Resolves the previewed drop from where the dragged card currently sits.
+    function evaluateDrop(index, pixelX, pixelY) {
+        const cell = Utils.cellFromPixel(pixelX, pixelY, colWidth, rowHeight, gap)
+        const res = Utils.dropResult(currentSpecs(), index, cell.col, cell.row, columns)
+        dropAction = res.action
+        dropCol = res.col
+        dropRow = res.row
+        dropSwapIndex = res.action === "swap" ? res.withIndex : -1
+    }
+
     onColWidthChanged: applyLayout()
     onAvailableWidthChanged: applyLayout()
     onGapChanged: applyLayout()
@@ -377,7 +387,36 @@ Item {
                 Item {
                     id: gridLayout
                     width: panel.availableWidth
-                    implicitHeight: panel.calculatedGridHeight
+                    // While dragging, the content has to reach the previewed cell or
+                    // the bottom row of the grid would be the lowest a widget could
+                    // ever go, and bottom-edge autoscroll would have nowhere to run.
+                    implicitHeight: panel.dragging
+                        ? Math.max(panel.calculatedGridHeight,
+                                   Math.round((panel.dropRow + panel.dragSpanH) * (panel.rowHeight + panel.gap)))
+                        : panel.calculatedGridHeight
+
+                    // Single shared drop preview. z: 0 keeps it behind the cards.
+                    Rectangle {
+                        id: dropPlaceholder
+                        visible: panel.dragging
+                        z: 0
+                        radius: 16
+                        color: "transparent"
+                        border.width: 2
+                        border.color: panel.dropAction === "reject"
+                            ? Qt.rgba(0.9, 0.25, 0.25, 0.9)
+                            : (island ? island.accent : "#3498db")
+
+                        x: Math.round(panel.dropCol * (panel.colWidth + panel.gap))
+                        y: Math.round(panel.dropRow * (panel.rowHeight + panel.gap))
+                        width: Math.round(panel.dragSpanW * panel.colWidth + (panel.dragSpanW - 1) * panel.gap)
+                        height: Math.round(panel.dragSpanH * panel.rowHeight + (panel.dragSpanH - 1) * panel.gap)
+
+                        Behavior on x { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                        Behavior on y { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                        Behavior on width { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                        Behavior on height { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                    }
 
                     Repeater {
                         id: gridRepeater
@@ -385,12 +424,20 @@ Item {
 
                         delegate: Item {
                             id: cardItem
-                            x: model.layoutX !== undefined ? model.layoutX : 0
-                            y: model.layoutY !== undefined ? model.layoutY : 0
-                            width: model.layoutW !== undefined ? model.layoutW : 100
-                            height: model.layoutH !== undefined ? model.layoutH : 48
 
                             readonly property bool isBeingDragged: panel.activeDragIndex === index
+                            readonly property bool isSwapTarget: panel.dragging
+                                && panel.dropAction === "swap"
+                                && panel.dropSwapIndex === index
+                            // Offsets, not assignments: x/y stay bound to the layout
+                            // engine, so releasing the card animates it home for free.
+                            readonly property real dragDX: isBeingDragged ? panel.dragTransX : 0
+                            readonly property real dragDY: isBeingDragged ? panel.dragTransY + panel.autoScrollAccum : 0
+
+                            x: (model.layoutX !== undefined ? model.layoutX : 0) + dragDX
+                            y: (model.layoutY !== undefined ? model.layoutY : 0) + dragDY
+                            width: model.layoutW !== undefined ? model.layoutW : 100
+                            height: model.layoutH !== undefined ? model.layoutH : 48
 
                             z: isBeingDragged ? 99 : 1
                             scale: isBeingDragged ? 1.04 : (cardMouse.pressed ? 0.96 : 1.0)
@@ -517,50 +564,118 @@ Item {
                                     anchors.fill: parent
                                     radius: parent.radius
                                     visible: panel.editMode
-                                    color: dragGripMouse.pressed ? Qt.rgba(0, 0, 0, 0.55) : Qt.rgba(0, 0, 0, 0.3)
-                                    border.width: cardItem.isBeingDragged ? 2 : 1
+                                    color: cardDrag.active ? Qt.rgba(0, 0, 0, 0.55) : Qt.rgba(0, 0, 0, 0.3)
+                                    border.width: (cardItem.isBeingDragged || cardItem.isSwapTarget) ? 2 : 1
                                     border.color: cardItem.isBeingDragged
                                         ? (island ? island.accent : "#3498db")
-                                        : Qt.rgba(1, 1, 1, 0.25)
+                                        : (cardItem.isSwapTarget
+                                            ? Qt.rgba(1, 1, 1, 0.8)
+                                            : Qt.rgba(1, 1, 1, 0.25))
 
+                                    // Swallows clicks so the live widget beneath is
+                                    // inert while editing. The DragHandler takes the
+                                    // grab from it once the drag threshold is crossed.
                                     MouseArea {
-                                        id: dragGripMouse
+                                        id: editBlocker
                                         anchors.fill: parent
-                                        cursorShape: Qt.SizeAllCursor
+                                        hoverEnabled: true
+                                    }
 
-                                        onPressed: {
-                                            panel.activeDragIndex = index
-                                            panel.dragging = true
-                                        }
+                                    DragHandler {
+                                        id: cardDrag
+                                        target: null
+                                        enabled: panel.editMode
+                                        dragThreshold: 6
+                                        cursorShape: active ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                                        // Default grabPermissions include
+                                        // ApprovesTakeOverByItems, which lets the parent
+                                        // Flickable steal the grab mid-drag — the card
+                                        // starts moving and the grid scrolls instead.
+                                        grabPermissions: PointerHandler.CanTakeOverFromItems
+                                            | PointerHandler.CanTakeOverFromHandlersOfDifferentType
+                                            | PointerHandler.ApprovesTakeOverByHandlersOfSameType
 
-                                        onPositionChanged: (mouse) => {
-                                            if (!panel.dragging || panel.activeDragIndex < 0) return
-                                            const pt = mapToItem(gridLayout, mouse.x, mouse.y)
-                                            let target = -1
-                                            for (let i = 0; i < gridModel.count; i++) {
-                                                if (i === panel.activeDragIndex) continue
-                                                const item = gridRepeater.itemAt(i)
-                                                if (item) {
-                                                    const marginX = item.width * 0.2
-                                                    const marginY = item.height * 0.2
-                                                    if (pt.x >= item.x + marginX && pt.x <= item.x + item.width - marginX &&
-                                                        pt.y >= item.y + marginY && pt.y <= item.y + item.height - marginY) {
-                                                        target = i
-                                                        break
-                                                    }
-                                                }
+                                        onActiveChanged: {
+                                            if (cardDrag.active) {
+                                                panel.activeDragIndex = index
+                                                panel.dragging = true
+                                                panel.dragSpanW = model.spanW
+                                                panel.dragSpanH = model.spanH
+                                                panel.dragBaseX = model.layoutX !== undefined ? model.layoutX : 0
+                                                panel.dragBaseY = model.layoutY !== undefined ? model.layoutY : 0
+                                                panel.dragTransX = 0
+                                                panel.dragTransY = 0
+                                                panel.autoScrollAccum = 0
+                                                panel.dropAction = "move"
+                                                panel.dropCol = model.col
+                                                panel.dropRow = model.row
+                                                panel.dropSwapIndex = -1
+                                                return
                                             }
-                                            if (target >= 0 && target !== panel.activeDragIndex) {
-                                                gridModel.move(panel.activeDragIndex, target, 1)
-                                                panel.activeDragIndex = target
-                                                panel.updateLayoutPositions()
-                                            }
-                                        }
 
-                                        onReleased: {
+                                            const action = panel.dropAction
+                                            const col = panel.dropCol
+                                            const row = panel.dropRow
+                                            const swapWith = panel.dropSwapIndex
+                                            const from = index
+                                            const oldCol = model.col
+                                            const oldRow = model.row
+
+                                            // Clear activeDragIndex first: that re-enables
+                                            // Behavior on x/y, so the card animates from
+                                            // where it was let go to where it lands.
                                             panel.activeDragIndex = -1
                                             panel.dragging = false
-                                            panel.persistOrder()
+
+                                            if (action === "move") {
+                                                gridModel.setProperty(from, "col", col)
+                                                gridModel.setProperty(from, "row", row)
+                                                panel.applyLayout()
+                                                panel.persistOrder()
+                                            } else if (action === "swap" && swapWith >= 0) {
+                                                gridModel.setProperty(from, "col", col)
+                                                gridModel.setProperty(from, "row", row)
+                                                gridModel.setProperty(swapWith, "col", oldCol)
+                                                gridModel.setProperty(swapWith, "row", oldRow)
+                                                panel.applyLayout()
+                                                panel.persistOrder()
+                                            }
+
+                                            panel.dragTransX = 0
+                                            panel.dragTransY = 0
+                                            panel.autoScrollAccum = 0
+                                            panel.dropSwapIndex = -1
+                                        }
+
+                                        onActiveTranslationChanged: {
+                                            if (!cardDrag.active) return
+                                            panel.dragTransX = cardDrag.activeTranslation.x
+                                            panel.dragTransY = cardDrag.activeTranslation.y
+                                            panel.evaluateDrop(index, cardItem.x, cardItem.y)
+                                        }
+                                    }
+
+                                    // Hint only — the whole overlay is grabbable.
+                                    Grid {
+                                        anchors.left: parent.left
+                                        anchors.top: parent.top
+                                        anchors.leftMargin: 8
+                                        anchors.topMargin: 8
+                                        columns: 2
+                                        rows: 3
+                                        rowSpacing: 3
+                                        columnSpacing: 3
+                                        opacity: (panel.showGrips || editBlocker.containsMouse || cardDrag.active) ? 0.8 : 0
+                                        Behavior on opacity { NumberAnimation { duration: 120 } }
+
+                                        Repeater {
+                                            model: 6
+                                            delegate: Rectangle {
+                                                width: 3
+                                                height: 3
+                                                radius: 1.5
+                                                color: "white"
+                                            }
                                         }
                                     }
 
