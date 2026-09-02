@@ -4,7 +4,7 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project follows
 [Semantic Versioning](https://semver.org/).
 
-## [1.5.0] — 2026-09-02
+## [2.0.0] — 2026-09-02
 ### Changed
 - **Widget panel drag rewritten around free grid placement.** Cards now follow the
   cursor, snap to the nearest cell, and stay exactly where they are dropped instead

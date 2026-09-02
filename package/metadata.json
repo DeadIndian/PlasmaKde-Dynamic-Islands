@@ -13,7 +13,7 @@
         "Id": "com.deadindian.dynamicisland",
         "License": "MIT",
         "Name": "Dynamic Island",
-        "Version": "1.5.0",
+        "Version": "2.0.0",
         "Website": "https://github.com/DeadIndian/PlasmaKde-Dynamic-Islands"
     },
     "KPackageStructure": "Plasma/Applet",
