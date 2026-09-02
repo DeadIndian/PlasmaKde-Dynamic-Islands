@@ -4,6 +4,32 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project follows
 [Semantic Versioning](https://semver.org/).
 
+## [1.5.0] — 2026-09-01
+### Changed
+- **Widget panel drag rewritten around free grid placement.** Cards now follow the
+  cursor, snap to the nearest cell, and stay exactly where they are dropped instead
+  of reflowing the whole grid. Each widget stores an explicit column and row, so
+  gaps are allowed and a layout no longer shifts when a neighbour moves.
+- Dropping a widget onto another of the **same size swaps the two**; any other
+  collision is refused, previewed with a red outline, and the card animates back to
+  where it started.
+- A **drop outline** previews the destination cell during the drag, and the swap
+  partner is highlighted before the exchange commits.
+- Dragging needs **6px of movement** to begin, so a click on a card in edit mode no
+  longer counts as a move — and no longer rewrites the saved layout.
+- The widget grid **scrolls in edit mode**, with autoscroll when a drag reaches the
+  top or bottom edge. Widgets below the fold were previously unreachable while
+  editing.
+- Rows grow on demand: a widget can be dropped into a new row below the current
+  layout instead of being limited to the preset's row count.
+- **Always show grips** now works. The setting existed since 1.4.0 but the panel
+  never read it; the grip dots now honour it and otherwise appear on hover.
+
+### Fixed
+- Moving a widget no longer repacks unrelated widgets in the grid.
+- The parent scroll view can no longer steal a drag in progress, which caused the
+  grid to scroll instead of the card moving.
+
 ## [1.4.0] — 2026-08-31
 ### Added
 - **Notifications widget** for the Quick Control Panel — scrollable list with
