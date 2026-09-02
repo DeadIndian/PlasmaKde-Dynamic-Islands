@@ -364,12 +364,19 @@ Item {
                 clip: true
                 interactive: !panel.dragging
 
+                // The bar floats over the right-hand column rather than reserving
+                // width, so an always-on one covers those cards. Fade it in only
+                // while the grid is moving, and keep it out of the input path when
+                // hidden so a wheel over the last column reaches the card.
                 QQC2.ScrollBar.vertical: QQC2.ScrollBar {
                     id: vScrollBar
-                    active: true
-                    policy: gridFlickable.contentHeight > gridFlickable.height + 4
-                        ? QQC2.ScrollBar.AlwaysOn
-                        : QQC2.ScrollBar.AlwaysOff
+                    padding: 2
+                    opacity: (active && size < 1.0) ? 1 : 0
+                    visible: opacity > 0
+
+                    Behavior on opacity {
+                        NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+                    }
 
                     contentItem: Rectangle {
                         implicitWidth: 4

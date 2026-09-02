@@ -4,7 +4,7 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project follows
 [Semantic Versioning](https://semver.org/).
 
-## [1.5.0] — 2026-09-01
+## [1.5.0] — 2026-09-02
 ### Changed
 - **Widget panel drag rewritten around free grid placement.** Cards now follow the
   cursor, snap to the nearest cell, and stay exactly where they are dropped instead
@@ -29,6 +29,10 @@ All notable changes to this project are documented here. The format is based on
 - Moving a widget no longer repacks unrelated widgets in the grid.
 - The parent scroll view can no longer steal a drag in progress, which caused the
   grid to scroll instead of the card moving.
+- The grid scrollbar no longer covers the right-hand column. It floats over the
+  content instead of reserving width, so an always-visible bar clipped those cards
+  and swallowed clicks and wheel events aimed at them. It now fades in only while
+  the grid is scrolling.
 
 ## [1.4.0] — 2026-08-31
 ### Added
