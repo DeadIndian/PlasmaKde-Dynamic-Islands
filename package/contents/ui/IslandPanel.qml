@@ -362,7 +362,7 @@ Item {
                 contentWidth: availableWidth
                 contentHeight: gridLayout.implicitHeight
                 clip: true
-                interactive: !panel.editMode && !panel.dragging
+                interactive: !panel.dragging
 
                 QQC2.ScrollBar.vertical: QQC2.ScrollBar {
                     id: vScrollBar
@@ -381,6 +381,42 @@ Item {
                         implicitWidth: 4
                         radius: 2
                         color: Qt.rgba(1, 1, 1, 0.1)
+                    }
+                }
+
+                // Edge autoscroll. contentY moves, and the same delta is added to
+                // autoScrollAccum so the card stays pinned under the cursor while
+                // the grid slides beneath it — without that it drifts away.
+                Timer {
+                    id: autoScroller
+                    interval: 16
+                    repeat: true
+                    running: panel.dragging && gridFlickable.contentHeight > gridFlickable.height
+
+                    readonly property real zone: 40
+                    readonly property real maxStep: 14
+
+                    onTriggered: {
+                        if (panel.activeDragIndex < 0) return
+
+                        const top = panel.dragCardY - gridFlickable.contentY
+                        const bottom = top + panel.dragCardH
+                        let dy = 0
+                        if (top < zone) {
+                            dy = -maxStep * Math.min(1, (zone - top) / zone)
+                        } else if (bottom > gridFlickable.height - zone) {
+                            dy = maxStep * Math.min(1, (bottom - (gridFlickable.height - zone)) / zone)
+                        }
+                        if (dy === 0) return
+
+                        const limit = Math.max(0, gridFlickable.contentHeight - gridFlickable.height)
+                        const next = Math.max(0, Math.min(gridFlickable.contentY + dy, limit))
+                        const applied = next - gridFlickable.contentY
+                        if (applied === 0) return
+
+                        gridFlickable.contentY = next
+                        panel.autoScrollAccum += applied
+                        panel.evaluateDrop(panel.activeDragIndex, panel.dragCardX, panel.dragCardY)
                     }
                 }
 
