@@ -93,7 +93,6 @@ KCM.SimpleKCM {
         QQC2.Switch { id: mediaSwitch;     Kirigami.FormData.label: Tr.t("Media Player:");    text: Tr.t("Now playing track details, album art, & playback controls") }
         QQC2.Switch { id: notifSwitch;    Kirigami.FormData.label: Tr.t("Notifications:");   text: Tr.t("Expand island on incoming system notifications") }
         QQC2.Switch { id: timerSwitch;    Kirigami.FormData.label: Tr.t("Countdown Timer:"); text: Tr.t("Interactive timer in widget panel & clock takeover") }
-        QQC2.Switch { id: clock24Switch;   Kirigami.FormData.label: Tr.t("Clock & Date:");     text: Tr.t("Idle clock, seconds display, and date formatting") }
         QQC2.Switch { id: sysMonSwitch;   Kirigami.FormData.label: Tr.t("System Monitor:");  text: Tr.t("Realtime CPU, RAM, & Temperature stats in widget panel") }
         QQC2.Switch { id: keyboardSwitch; Kirigami.FormData.label: Tr.t("Keyboard Layout:"); text: Tr.t("Announce layout changes") }
         QQC2.Switch { id: downloadsSwitch;Kirigami.FormData.label: Tr.t("Downloads:");       text: Tr.t("Show active file download progress") }
@@ -323,6 +322,12 @@ KCM.SimpleKCM {
         Item {
             Kirigami.FormData.isSection: true
             Kirigami.FormData.label: Tr.t("⏰ Clock & Date Options")
+        }
+
+        QQC2.Switch {
+            id: clock24Switch
+            Kirigami.FormData.label: Tr.t("Time format:")
+            text: Tr.t("Use 24-hour clock")
         }
 
         QQC2.Switch {
