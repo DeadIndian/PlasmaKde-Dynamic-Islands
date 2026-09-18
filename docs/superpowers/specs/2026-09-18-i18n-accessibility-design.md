@@ -47,8 +47,8 @@ Total: 17. Locale selection handled by KDE — no custom detection.
 
 ## 5. Tooling
 
-- `tools/extract-i18n.py` — regex-based QML string extractor → writes .pot
-- `tools/build-locales.sh` — extract, msgmerge all .po, msgfmt into package/contents/locale/
+- `tools/extract-i18n.py` — regex-based QML string extractor → writes `po/com.deadindian.dynamicisland.pot`
+- `tools/build-locales.sh` — extract, msgmerge all .po, msgfmt into `package/contents/locale/`
 - `msgfmt --check` validates every .po (catches %1 format-string mistakes)
 - Existing `tests/qmlcheck.sh` must pass after migration
 - New smoke test: every `i18n()` string in QML exists in .pot
