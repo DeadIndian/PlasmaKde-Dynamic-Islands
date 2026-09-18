@@ -1,0 +1,1017 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: com.deadindian.dynamicisland\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: package/contents/ui/main.qml:519
+msgid "%1 minutes elapsed"
+msgstr ""
+
+#: package/contents/ui/widgets/NotificationsWidget.qml:126
+msgid "%1 notifications"
+msgstr ""
+
+#: package/contents/ui/main.qml:521
+msgid "%1 seconds elapsed"
+msgstr ""
+
+#: package/contents/ui/main.qml:1438
+msgid "%1 unread"
+msgstr ""
+
+#: package/contents/ui/main.qml:1521
+msgid "%1% complete"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:353
+msgid "Above time"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:525
+msgid "Accent badge (e.g. 60 fps)"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:160
+msgid "Accent color:"
+msgstr ""
+
+#: package/contents/ui/configPanel.qml:137
+msgid "Active Widgets (In Panel Display Order)"
+msgstr ""
+
+#: package/contents/ui/main.qml:1523
+msgid "Active capture or presentation mode"
+msgstr ""
+
+#: package/contents/ui/configPanel.qml:154
+msgid "Active list:"
+msgstr ""
+
+#: package/contents/ui/IslandPanel.qml:806
+msgid "Add Quick Toggle or Widget:"
+msgstr ""
+
+#: package/contents/ui/configPanel.qml:241
+msgid "Add to Panel"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:222
+msgid "Album art size & radius:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:216
+msgid "Album art:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:476
+msgid "Also rotate through the capsule clock"
+msgstr ""
+
+#: package/contents/ui/configPanel.qml:122
+msgid "Always show drag handle grips on widgets (otherwise visible on hover)"
+msgstr ""
+
+#: package/contents/ui/configPanel.qml:105
+msgid "Always, embedding active content at the top"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:267
+msgid "Animated equalizer:"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:250
+msgid "Animation speed:"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:245
+msgid "Animations:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:97
+msgid "Announce layout changes"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:193
+msgid "Artist color (hex):"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:185
+msgid "Artist font:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:161
+msgid "Artist line:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:167
+msgid "Artist size & weight:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:287
+msgid "Artist template:"
+msgstr ""
+
+#: package/contents/ui/configPanel.qml:113
+msgid "Auto-close on hover exit:"
+msgstr ""
+
+#: package/contents/ui/configPanel.qml:115
+msgid "Automatically close the panel when mouse pointer leaves"
+msgstr ""
+
+#: package/contents/ui/configPanel.qml:212
+msgid "Available Widgets (Click to Add)"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:117
+msgid "Background color:"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:140
+msgid "Background opacity:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:352
+msgid "Below time"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:355
+msgid "Beside time (Left)"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:354
+msgid "Beside time (Right)"
+msgstr ""
+
+#: package/contents/ui/widgets/QuickToggleWidget.qml:41
+msgid "Bluetooth"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:81
+msgid "Bold"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:154
+msgid "Border outline:"
+msgstr ""
+
+#: package/contents/ui/main.qml:284
+#: package/contents/ui/main.qml:654
+msgid "Build failed"
+msgstr ""
+
+#: package/contents/ui/main.qml:284
+#: package/contents/ui/main.qml:654
+msgid "Build succeeded"
+msgstr ""
+
+#: package/contents/ui/widgets/SystemWidget.qml:80
+#: package/contents/ui/widgets/SystemWidget.qml:258
+msgid "CPU"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:497
+msgid "CPU load percentage"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:509
+msgid "CPU temperature"
+msgstr ""
+
+#: package/contents/ui/widgets/TimerWidget.qml:662
+msgid "Cancel"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:211
+msgid "Capsule Layout & Ordering"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:234
+msgid "Capsule art size:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:294
+msgid "Capsule media scale:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:415
+msgid "Capsule takeover:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:460
+msgid "Circular donut / pie charts"
+msgstr ""
+
+#: package/contents/ui/widgets/NotificationsWidget.qml:101
+#: package/contents/ui/widgets/NotificationsWidget.qml:190
+msgid "Clear All"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:371
+msgid "Compact (Sat 29)"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:461
+msgid "Compact glass value pills"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:216
+msgid "Compact order:"
+msgstr ""
+
+#: package/contents/ui/main.qml:1522
+msgid "Connected"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:222
+msgid "Content · FPS · Time"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:220
+msgid "Content · Time · FPS"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:94
+msgid "Controls corner rounding, distance from panel, and optional custom pixel dimensions."
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:43
+msgid "Corner radius:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:95
+msgid "Countdown Timer:"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:174
+msgid "Custom accent (hex):"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:132
+msgid "Custom background (hex):"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:385
+msgid "Custom date format:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:377
+msgid "Custom..."
+msgstr ""
+
+#: package/contents/ui/widgets/QuickToggleWidget.qml:42
+msgid "DND"
+msgstr ""
+
+#: package/contents/ui/widgets/QuickToggleWidget.qml:44
+msgid "Dark Theme"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:373
+msgid "Date Only (Aug 29)"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:341
+msgid "Date display:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:363
+msgid "Date format:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:347
+msgid "Date position:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:372
+msgid "Day Only (Saturday)"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:402
+msgid "Default duration:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:80
+msgid "DemiBold"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:38
+msgid "Dimensions & Shape"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:218
+msgid "Display cover art thumbnail"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:49
+msgid "Distance from panel:"
+msgstr ""
+
+#: package/contents/ui/IslandPanel.qml:339
+msgid "Done"
+msgstr ""
+
+#: package/contents/ui/main.qml:278
+msgid "Download active"
+msgstr ""
+
+#: package/contents/ui/main.qml:278
+msgid "Downloads"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:98
+msgid "Downloads:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:209
+msgid "Duplicate artist:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:90
+msgid "Dynamic Island Modules"
+msgstr ""
+
+#: package/contents/ui/IslandPanel.qml:339
+msgid "Edit"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:246
+msgid "Enable dynamic transitions, expansions, and audio pulses"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:94
+msgid "Expand island on incoming system notifications"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:111
+msgid "Expanded background:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:307
+msgid "Expanded media scale:"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:83
+msgid "Expanded panel height:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:520
+msgid "FPS badge style:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:514
+msgid "FPS counter:"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:223
+msgid "FPS · Content · Time"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:225
+msgid "FPS · Time · Content"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:113
+msgid "Fill the expanded island panel background"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:106
+msgid "Follow system desktop theme colors"
+msgstr ""
+
+#: package/contents/ui/widgets/QuickToggleWidget.qml:201
+msgid "Hibernate"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:211
+msgid "Hide artist if it matches the track title"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:459
+msgid "Horizontal progress bars"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:100
+msgid "IDE Build Status:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:374
+msgid "ISO (2026-08-29)"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:181
+msgid "Idle dot color:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:495
+msgid "Individual stats:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:100
+msgid "IntelliJ IDEA build completion popup"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:95
+msgid "Interactive timer in widget panel & clock takeover"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:97
+msgid "Keyboard Layout:"
+msgstr ""
+
+#: package/contents/ui/main.qml:275
+#: package/contents/ui/main.qml:1509
+#: package/contents/ui/main.qml:1519
+msgid "Keyboard layout"
+msgstr ""
+
+#: package/contents/ui/configPanel.qml:91
+msgid "Large (Full 4-column panel)"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:77
+msgid "Light"
+msgstr ""
+
+#: package/contents/ui/widgets/QuickToggleWidget.qml:191
+msgid "Lock Screen"
+msgstr ""
+
+#: package/contents/ui/widgets/QuickToggleWidget.qml:216
+msgid "Log Out"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:370
+msgid "Long (Saturday, August 29, 2026)"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:202
+msgid "Long artists:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:154
+msgid "Long titles:"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:55
+msgid "Manual dimensions:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:526
+msgid "Match clock font (e.g. 60)"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:438
+msgid "Max body lines:"
+msgstr ""
+
+#: package/contents/ui/widgets/MediaWidget.qml:34
+msgid "Media Player"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:93
+msgid "Media Player:"
+msgstr ""
+
+#: package/contents/ui/MediaExpanded.qml:181
+msgid "Media player"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:79
+msgid "Medium"
+msgstr ""
+
+#: package/contents/ui/configPanel.qml:90
+msgid "Medium (3x3 grid)"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:369
+msgid "Medium (Saturday, Aug 29)"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:462
+msgid "Mini stat grid cards"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:233
+msgid "Module dividers:"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:240
+msgid "Motion & Animations"
+msgstr ""
+
+#: package/contents/ui/configPanel.qml:196
+msgid "Move Down"
+msgstr ""
+
+#: package/contents/ui/configPanel.qml:188
+msgid "Move Up"
+msgstr ""
+
+#: package/contents/ui/main.qml:33
+#: package/contents/ui/main.qml:269
+msgid "Music"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:62
+msgid "Music panel width:"
+msgstr ""
+
+#: package/contents/ui/widgets/VolumeWidget.qml:140
+msgid "Mute"
+msgstr ""
+
+#: package/contents/ui/widgets/VolumeWidget.qml:191
+msgid "Muted"
+msgstr ""
+
+#: package/contents/ui/main.qml:1438
+msgid "New notification"
+msgstr ""
+
+#: package/contents/ui/widgets/QuickToggleWidget.qml:43
+msgid "Night Light"
+msgstr ""
+
+#: package/contents/ui/widgets/MediaWidget.qml:27
+msgid "No Media Playing"
+msgstr ""
+
+#: package/contents/ui/main.qml:1521
+msgid "No active downloads"
+msgstr ""
+
+#: package/contents/ui/widgets/NotificationsWidget.qml:123
+msgid "No new notifications"
+msgstr ""
+
+#: package/contents/ui/widgets/NotificationsWidget.qml:237
+msgid "No notifications right now"
+msgstr ""
+
+#: package/contents/ui/MediaExpanded.qml:163
+msgid "No title"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:78
+msgid "Normal"
+msgstr ""
+
+#: package/contents/ui/main.qml:34
+#: package/contents/ui/main.qml:272
+#: package/contents/ui/main.qml:540
+#: package/contents/ui/main.qml:819
+#: package/contents/ui/main.qml:1429
+#: package/contents/ui/widgets/NotificationsWidget.qml:287
+msgid "Notification"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:69
+msgid "Notification panel width:"
+msgstr ""
+
+#: package/contents/ui/widgets/NotificationsWidget.qml:63
+msgid "Notifications"
+msgstr ""
+
+#: package/contents/ui/widgets/NotificationsWidget.qml:153
+msgid "Notifications Center"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:94
+msgid "Notifications:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:93
+msgid "Now playing track details, album art, & playback controls"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:375
+msgid "Numeric EU (29/08/2026)"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:376
+msgid "Numeric US (08/29/2026)"
+msgstr ""
+
+#: package/contents/ui/widgets/QuickToggleWidget.qml:51
+msgid "Off"
+msgstr ""
+
+#: package/contents/ui/widgets/QuickToggleWidget.qml:51
+msgid "On"
+msgstr ""
+
+#: package/contents/ui/configPanel.qml:104
+msgid "Only when idle (no active media or notification)"
+msgstr ""
+
+#: package/contents/ui/configPanel.qml:79
+msgid "Open an interactive floating control panel when clicking the idle capsule"
+msgstr ""
+
+#: package/contents/ui/configPanel.qml:126
+msgid "Panel clock font size:"
+msgstr ""
+
+#: package/contents/ui/configPanel.qml:84
+msgid "Panel layout preset:"
+msgstr ""
+
+#: package/contents/ui/widgets/TimerWidget.qml:259
+#: package/contents/ui/widgets/TimerWidget.qml:473
+msgid "Pause"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:515
+msgid "Permanently show frames-per-second next to the clock"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:105
+msgid "Plasma desktop theme:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:274
+msgid "Playback controls:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:260
+msgid "Playback times:"
+msgstr ""
+
+#: package/contents/ui/main.qml:1520
+msgid "Pomodoro session in progress"
+msgstr ""
+
+#: package/contents/ui/widgets/QuickToggleWidget.qml:45
+msgid "Power"
+msgstr ""
+
+#: package/contents/ui/configPanel.qml:73
+msgid "Quick Control Panel Options"
+msgstr ""
+
+#: package/contents/ui/widgets/SystemWidget.qml:122
+#: package/contents/ui/widgets/SystemWidget.qml:314
+msgid "RAM"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:503
+msgid "RAM usage percentage"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:96
+msgid "Realtime CPU, RAM, & Temperature stats in widget panel"
+msgstr ""
+
+#: package/contents/ui/widgets/QuickToggleWidget.qml:206
+msgid "Reboot"
+msgstr ""
+
+#: package/contents/ui/configPanel.qml:204
+msgid "Remove Widget"
+msgstr ""
+
+#: package/contents/ui/configPanel.qml:120
+msgid "Reorder handles:"
+msgstr ""
+
+#: package/contents/ui/widgets/TimerWidget.qml:231
+#: package/contents/ui/widgets/TimerWidget.qml:447
+msgid "Reset"
+msgstr ""
+
+#: package/contents/ui/widgets/TimerWidget.qml:260
+#: package/contents/ui/widgets/TimerWidget.qml:474
+msgid "Resume"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:99
+msgid "Screen Capture:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:99
+msgid "Screen recording and presentation indicator"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:204
+msgid "Scroll long artist names smoothly"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:156
+msgid "Scroll long track titles smoothly"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:335
+msgid "Seconds display:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:250
+msgid "Seek bar height:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:244
+msgid "Seek bar:"
+msgstr ""
+
+#: package/contents/ui/widgets/TimerWidget.qml:357
+msgid "Select Duration"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:424
+msgid "Send desktop notification when countdown finishes"
+msgstr ""
+
+#: package/contents/ui/widgets/QuickToggleWidget.qml:50
+msgid "Session"
+msgstr ""
+
+#: package/contents/ui/widgets/TimerWidget.qml:575
+msgid "Set Custom Timer"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:195
+msgid "Sharing dot color:"
+msgstr ""
+
+#: package/contents/ui/main.qml:281
+msgid "Sharing screen"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:368
+msgid "Short (Sat, Aug 29)"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:156
+msgid "Show a subtle glass border around the expanded island"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:98
+msgid "Show active file download progress"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:269
+msgid "Show animated sound bars when music is playing"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:163
+msgid "Show artist name"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:342
+msgid "Show day and date next to time"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:262
+msgid "Show elapsed and total track duration"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:417
+msgid "Show live countdown in capsule clock while timer is active"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:56
+msgid "Show pixel width & height spinboxes"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:276
+msgid "Show previous, play/pause, and next buttons"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:336
+msgid "Show seconds counter in time readout"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:246
+msgid "Show track progress bar and click to seek"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:115
+msgid "Show track title"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:234
+msgid "Show “/” separators between capsule modules"
+msgstr ""
+
+#: package/contents/ui/widgets/QuickToggleWidget.qml:211
+msgid "Shut Down"
+msgstr ""
+
+#: package/contents/ui/configPanel.qml:89
+msgid "Small (Compact 2x3 grid)"
+msgstr ""
+
+#: package/contents/ui/widgets/TimerWidget.qml:260
+msgid "Start"
+msgstr ""
+
+#: package/contents/ui/widgets/TimerWidget.qml:474
+#: package/contents/ui/widgets/TimerWidget.qml:671
+msgid "Start Timer"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:454
+msgid "Stat display style:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:471
+msgid "Stats location:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:485
+msgid "Stats rotation interval:"
+msgstr ""
+
+#: package/contents/ui/main.qml:1524
+msgid "Status"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:76
+msgid "Status panel width:"
+msgstr ""
+
+#: package/contents/ui/widgets/QuickToggleWidget.qml:196
+msgid "Suspend"
+msgstr ""
+
+#: package/contents/ui/IslandPanel.qml:304
+msgid "System Info & About"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:96
+msgid "System Monitor:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:147
+#: package/contents/ui/configModules.qml:195
+msgid "System default color"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:139
+#: package/contents/ui/configModules.qml:187
+msgid "System default font"
+msgstr ""
+
+#: package/contents/ui/widgets/SystemWidget.qml:164
+#: package/contents/ui/widgets/SystemWidget.qml:371
+msgid "TEMP"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:100
+msgid "Theme & Colors"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:329
+msgid "Time format:"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:221
+msgid "Time · Content · FPS"
+msgstr ""
+
+#: package/contents/ui/configAppearance.qml:224
+msgid "Time · FPS · Content"
+msgstr ""
+
+#: package/contents/ui/widgets/TimerWidget.qml:528
+msgid "Timer"
+msgstr ""
+
+#: package/contents/ui/widgets/TimerWidget.qml:357
+msgid "Timer Paused"
+msgstr ""
+
+#: package/contents/ui/widgets/TimerWidget.qml:356
+msgid "Timer Running"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:422
+msgid "Timer finish alert:"
+msgstr ""
+
+#: package/contents/ui/main.qml:517
+msgid "Timer finished"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:145
+msgid "Title color (hex):"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:137
+msgid "Title font:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:113
+msgid "Title line:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:119
+msgid "Title size & weight:"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:280
+msgid "Title template:"
+msgstr ""
+
+#: package/contents/ui/widgets/QuickToggleWidget.qml:46
+msgid "Toggle"
+msgstr ""
+
+#: package/contents/ui/configPanel.qml:99
+msgid "Trigger mode:"
+msgstr ""
+
+#: package/contents/ui/widgets/VolumeWidget.qml:140
+msgid "Unmute"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:330
+msgid "Use 24-hour clock"
+msgstr ""
+
+#: package/contents/ui/main.qml:1518
+msgid "Volume"
+msgstr ""
+
+#: package/contents/ui/widgets/QuickToggleWidget.qml:40
+msgid "Wi-Fi"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:475
+msgid "Widget panel only — capsule keeps time & events"
+msgstr ""
+
+#: package/contents/ui/configPanel.qml:78
+msgid "Widget panel:"
+msgstr ""
+
+#: package/contents/ui/configPanel.qml:146
+msgid "Widgets currently active on your floating panel in exact display order. Use the arrows to move items up/down."
+msgstr ""
+
+#: package/contents/ui/main.qml:1524
+msgid "failed"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:407
+msgid "min"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:124
+#: package/contents/ui/configModules.qml:172
+#: package/contents/ui/configPanel.qml:131
+msgid "pt"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:255
+msgid "px"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:239
+msgid "px (0 hides in capsule)"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:230
+msgid "px radius"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:227
+msgid "px size"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:410
+msgid "sec"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:490
+msgid "seconds"
+msgstr ""
+
+#: package/contents/ui/main.qml:1524
+msgid "success"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:324
+msgid "⏰ Clock & Date Options"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:397
+msgid "⏱️ Countdown Timer Options"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:107
+msgid "🎵 Media Player Options"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:448
+msgid "💻 System Monitor & FPS Counter"
+msgstr ""
+
+#: package/contents/ui/configModules.qml:432
+msgid "🔔 Notifications Options"
+msgstr ""
