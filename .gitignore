@@ -1,5 +1,4 @@
 # Build / packaging artifacts
-*.plasmoid
 *.zip
 *.tar.gz
 *.kpackage

@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install zip
+        run: sudo apt-get update && sudo apt-get install -y zip
+
+      - name: Extract version
+        run: echo "VERSION=$(sed -n 's/.*"Version": *"\([^"]*\)".*/\1/p' package/metadata.json | head -1)" >> $GITHUB_ENV
+
+      - name: Build .plasmoid
+        run: cd package && zip -r -q "../dynamicisland-${{ env.VERSION }}.plasmoid" . -x '.*' -x '*/.*'
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dynamicisland-${{ env.VERSION }}.plasmoid
+          tag_name: ${{ github.ref_name }}
+          name: Dynamic Islands ${{ env.VERSION }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
