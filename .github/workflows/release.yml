@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Extract version
-        run: python3 -c "import json; print('VERSION=' + json.load(open('package/metadata.json'))['Version'])" >> $GITHUB_ENV
+        run: python3 -c "import json; print('VERSION=' + json.load(open('package/metadata.json'))['KPlugin']['Version'])" >> $GITHUB_ENV
 
       - name: Build .plasmoid
         run: |
