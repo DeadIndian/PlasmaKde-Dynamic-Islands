@@ -15,14 +15,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install zip
-        run: sudo apt-get update && sudo apt-get install -y zip
-
       - name: Extract version
-        run: echo "VERSION=$(sed -n 's/.*"Version": *"\([^"]*\)".*/\1/p' package/metadata.json | head -1)" >> $GITHUB_ENV
+        run: python3 -c "import json; print('VERSION=' + json.load(open('package/metadata.json'))['Version'])" >> $GITHUB_ENV
 
       - name: Build .plasmoid
-        run: cd package && zip -r -q "../dynamicisland-${{ env.VERSION }}.plasmoid" . -x '.*' -x '*/.*'
+        run: |
+          apt-get update && apt-get install -y zip
+          cd package && zip -r -q "../dynamicisland-${{ env.VERSION }}.plasmoid" . -x '.*' -x '*/.*'
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

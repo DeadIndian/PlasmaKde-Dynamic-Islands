@@ -2,6 +2,7 @@
 *.zip
 *.tar.gz
 *.kpackage
+*.plasmoid
 
 # Editor / OS noise
 .DS_Store
